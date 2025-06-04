@@ -1,6 +1,8 @@
 package com.greendam.cloudphotoalbum.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.greendam.cloudphotoalbum.model.dto.UserLoginDTO;
+import com.greendam.cloudphotoalbum.model.dto.UserQueryDTO;
 import com.greendam.cloudphotoalbum.model.dto.UserRegisterDTO;
 import com.greendam.cloudphotoalbum.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -44,4 +46,20 @@ public interface UserService extends IService<User> {
      * @param request HttpServletRequest对象
      */
     void logout(HttpServletRequest request);
+
+    /**
+     * 设置分页查询用户条件
+     *
+     * @param userQueryRequest 用户查询数据传输对象
+     * @return 返回分页查询结果
+     */
+    QueryWrapper<User> getQueryWrapper(UserQueryDTO userQueryRequest);
+
+    /**
+     * 获取加密后的密码
+     *
+     * @param defaultPassword 默认密码
+     * @return 返回加密后的密码
+     */
+    String getEncryptPassword(String defaultPassword);
 }

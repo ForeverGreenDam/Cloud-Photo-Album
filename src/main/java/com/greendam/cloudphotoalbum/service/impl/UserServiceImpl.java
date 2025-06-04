@@ -1,12 +1,16 @@
 package com.greendam.cloudphotoalbum.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
+import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.exception.ThrowUtils;
 import com.greendam.cloudphotoalbum.model.dto.UserLoginDTO;
+import com.greendam.cloudphotoalbum.model.dto.UserQueryDTO;
 import com.greendam.cloudphotoalbum.model.dto.UserRegisterDTO;
 import com.greendam.cloudphotoalbum.model.entity.User;
 import com.greendam.cloudphotoalbum.model.enums.UserRoleEnum;
@@ -85,13 +89,36 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 清除session中的用户信息
         request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
     }
+    @Override
+    public QueryWrapper<User> getQueryWrapper(UserQueryDTO userQueryRequest) {
+        if (userQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
+        }
+        Long id = userQueryRequest.getId();
+        String userAccount = userQueryRequest.getUserAccount();
+        String userName = userQueryRequest.getUserName();
+        String userProfile = userQueryRequest.getUserProfile();
+        String userRole = userQueryRequest.getUserRole();
+        String sortField = userQueryRequest.getSortField();
+        String sortOrder = userQueryRequest.getSortOrder();
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(ObjUtil.isNotNull(id), "id", id);
+        queryWrapper.eq(StrUtil.isNotBlank(userRole), "userRole", userRole);
+        queryWrapper.like(StrUtil.isNotBlank(userAccount), "userAccount", userAccount);
+        queryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
+        queryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
+        // 设置排序条件  参数一：是否需要排序，参数二：升序还是降序，参数三：排序字段
+        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), "ascend".equals(sortOrder), sortField);
+        return queryWrapper;
+    }
 
     /**
      * 获取加密后的密码
      * @param password 用户密码
      * @return 返回加密后的密码
      */
-    private String getEncryptPassword(String password) {
+    @Override
+    public String getEncryptPassword(String password) {
         // 加盐
         final String salt = "ForeverGreenDam";
         String result = DigestUtils.md5DigestAsHex((salt + password).getBytes());
