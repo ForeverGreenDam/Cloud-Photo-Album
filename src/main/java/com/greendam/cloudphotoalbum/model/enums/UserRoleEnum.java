@@ -13,8 +13,7 @@ public enum UserRoleEnum {
      */
     USER("用户", "user"),
     ADMIN("管理员", "admin"),
-    SUPER_ADMIN("超级管理员", "super_admin"),
-    VIP("VIP用户", "vip"),;
+    VIP("VIP用户", "vip");
 
 
     private final String text;
