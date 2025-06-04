@@ -1,22 +1,23 @@
 package com.greendam.cloudphotoalbum.service.impl;
 
-import cn.hutool.core.date.DateUtil;
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.greendam.cloudphotoalbum.common.BaseResponse;
+import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.exception.ThrowUtils;
+import com.greendam.cloudphotoalbum.model.dto.UserLoginDTO;
 import com.greendam.cloudphotoalbum.model.dto.UserRegisterDTO;
 import com.greendam.cloudphotoalbum.model.entity.User;
 import com.greendam.cloudphotoalbum.model.enums.UserRoleEnum;
+import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.service.UserService;
 import com.greendam.cloudphotoalbum.mapper.UserMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
-import java.sql.Date;
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 
 /**
@@ -56,6 +57,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         ThrowUtils.throwIf(!saveResult, ErrorCode.SYSTEM_ERROR);
         return  user.getId();
     }
+
+    @Override
+    public UserLoginVO login(UserLoginDTO userLoginDTO, HttpServletRequest request) {
+        ThrowUtils.throwIf(userLoginDTO.getUserAccount().isEmpty()||userLoginDTO.getUserPassword().isEmpty(), ErrorCode.PARAMS_ERROR);
+        String userAccount = userLoginDTO.getUserAccount();
+        String userPassword =getEncryptPassword(userLoginDTO.getUserPassword());
+        // 查询用户
+        User user = userMapper.selectOne(new QueryWrapper<User>().eq("userAccount", userAccount).eq("userPassword", userPassword));
+        ThrowUtils.throwIf(user == null, ErrorCode.OPERATION_ERROR, "用户不存在或密码错误");
+        //在session中存储用户信息
+        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
+        return BeanUtil.copyProperties(user, UserLoginVO.class);
+    }
+
     /**
      * 获取加密后的密码
      * @param password 用户密码

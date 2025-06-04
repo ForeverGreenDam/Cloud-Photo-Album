@@ -1,9 +1,12 @@
 package com.greendam.cloudphotoalbum.service;
 
-import com.greendam.cloudphotoalbum.common.BaseResponse;
+import com.greendam.cloudphotoalbum.model.dto.UserLoginDTO;
 import com.greendam.cloudphotoalbum.model.dto.UserRegisterDTO;
 import com.greendam.cloudphotoalbum.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
 * @author ForeverGreenDam
@@ -17,4 +20,13 @@ public interface UserService extends IService<User> {
      * @return 返回用户ID
      */
     Long register(UserRegisterDTO userRegisterDTO);
+
+    /**
+     * 用户登录
+     *
+     * @param userLoginDTO 用户登录数据传输对象
+     * @param request
+     * @return 返回用户登录信息
+     */
+    UserLoginVO login(UserLoginDTO userLoginDTO, HttpServletRequest request);
 }

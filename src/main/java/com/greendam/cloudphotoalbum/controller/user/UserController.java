@@ -3,7 +3,9 @@ package com.greendam.cloudphotoalbum.controller.user;
 import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.exception.ThrowUtils;
+import com.greendam.cloudphotoalbum.model.dto.UserLoginDTO;
 import com.greendam.cloudphotoalbum.model.dto.UserRegisterDTO;
+import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.service.UserService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * 用户控制器
@@ -31,5 +34,11 @@ public class UserController {
         ThrowUtils.throwIf(userRegisterDTO==null, ErrorCode.PARAMS_ERROR);
         Long userId = userService.register(userRegisterDTO);
         return BaseResponse.success(userId);
+    }
+    @PostMapping("/login")
+    public BaseResponse<UserLoginVO> userLogin(@RequestBody UserLoginDTO userLoginDTO, HttpServletRequest request) {
+        ThrowUtils.throwIf(userLoginDTO==null, ErrorCode.PARAMS_ERROR);
+        UserLoginVO userLoginVO = userService.login(userLoginDTO,request);
+        return BaseResponse.success(userLoginVO);
     }
 }
