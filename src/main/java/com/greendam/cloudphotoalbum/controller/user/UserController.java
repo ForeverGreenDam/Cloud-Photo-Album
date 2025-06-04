@@ -44,10 +44,25 @@ public class UserController {
         UserLoginVO userLoginVO = userService.login(userLoginDTO,request);
         return BaseResponse.success(userLoginVO);
     }
+    /**
+     * 获取当前登录用户信息
+     * @param request HttpServletRequest对象
+     * @return 返回用户登录信息
+     */
     @GetMapping("/get/login")
     public BaseResponse<UserLoginVO> getUser(HttpServletRequest request) {
         UserLoginVO userLoginVO = userService.getUser(request);
         ThrowUtils.throwIf(userLoginVO == null, ErrorCode.NOT_LOGIN_ERROR);
         return BaseResponse.success(userLoginVO);
+    }
+    /**
+     * 用户登出
+     * @param request HttpServletRequest对象
+     * @return 返回成功消息
+     */
+    @PostMapping("/logout")
+    public BaseResponse<String> userLogout(HttpServletRequest request) {
+        userService.logout(request);
+        return BaseResponse.success("登出成功");
     }
 }

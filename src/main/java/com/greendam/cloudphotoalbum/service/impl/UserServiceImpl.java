@@ -78,6 +78,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return BeanUtil.copyProperties(user, UserLoginVO.class);
     }
 
+    @Override
+    public void logout(HttpServletRequest request) {
+        Object user = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR);
+        // 清除session中的用户信息
+        request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+    }
+
     /**
      * 获取加密后的密码
      * @param password 用户密码
