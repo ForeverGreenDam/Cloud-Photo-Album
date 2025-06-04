@@ -70,6 +70,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
         return BeanUtil.copyProperties(user, UserLoginVO.class);
     }
+    @Override
+    public UserLoginVO getUser(HttpServletRequest request) {
+        Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        ThrowUtils.throwIf(userObj == null, ErrorCode.NOT_LOGIN_ERROR);
+        User user = (User) userObj;
+        return BeanUtil.copyProperties(user, UserLoginVO.class);
+    }
 
     /**
      * 获取加密后的密码

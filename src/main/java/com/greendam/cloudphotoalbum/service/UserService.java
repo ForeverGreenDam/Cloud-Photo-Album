@@ -29,4 +29,12 @@ public interface UserService extends IService<User> {
      * @return 返回用户登录信息
      */
     UserLoginVO login(UserLoginDTO userLoginDTO, HttpServletRequest request);
+
+    /**
+     * 获取当前登录用户信息
+     *
+     * @param request HttpServletRequest对象
+     * @return 返回用户登录信息
+     */
+    UserLoginVO getUser(HttpServletRequest request);
 }

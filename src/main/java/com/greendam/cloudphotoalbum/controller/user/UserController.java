@@ -7,10 +7,7 @@ import com.greendam.cloudphotoalbum.model.dto.UserLoginDTO;
 import com.greendam.cloudphotoalbum.model.dto.UserRegisterDTO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.service.UserService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -35,10 +32,22 @@ public class UserController {
         Long userId = userService.register(userRegisterDTO);
         return BaseResponse.success(userId);
     }
+    /**
+     * 用户登录
+     * @param userLoginDTO 用户登录数据传输对象
+     * @param request HttpServletRequest对象
+     * @return 返回用户登录信息
+     */
     @PostMapping("/login")
     public BaseResponse<UserLoginVO> userLogin(@RequestBody UserLoginDTO userLoginDTO, HttpServletRequest request) {
         ThrowUtils.throwIf(userLoginDTO==null, ErrorCode.PARAMS_ERROR);
         UserLoginVO userLoginVO = userService.login(userLoginDTO,request);
+        return BaseResponse.success(userLoginVO);
+    }
+    @GetMapping("/get/login")
+    public BaseResponse<UserLoginVO> getUser(HttpServletRequest request) {
+        UserLoginVO userLoginVO = userService.getUser(request);
+        ThrowUtils.throwIf(userLoginVO == null, ErrorCode.NOT_LOGIN_ERROR);
         return BaseResponse.success(userLoginVO);
     }
 }
