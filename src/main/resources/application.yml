@@ -4,10 +4,13 @@ server:
     context-path: /api
 spring:
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/cloud_photo
-    username: root
-    password: 753951JcJ~
+    druid:
+      driver-class-name: ${greendam.datasource.driver-class-name}
+      url: jdbc:mysql://${greendam.datasource.host}:${greendam.datasource.port}/${greendam.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+      username: ${greendam.datasource.username}
+      password: ${greendam.datasource.password}
+  profiles:
+    active: dev
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
@@ -27,4 +30,10 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.greendam.cloudphotoalbum.controller
+greendam:
+  alioss:
+    endpoint: ${greendam.alioss.endpoint}
+    bucket-name: ${greendam.alioss.bucket-name}
+    access-key-id: ${greendam.alioss.access-key-id}
+    access-key-secret: ${greendam.alioss.access-key-secret}
 

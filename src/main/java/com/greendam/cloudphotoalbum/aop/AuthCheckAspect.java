@@ -50,6 +50,7 @@ public class AuthCheckAspect {
         //获取当前用户角色
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
+        //getUser已经做了对未登录用户的判断，这里的user一定是已登录的用户
         UserLoginVO user= userService.getUser(request);
         UserRoleEnum userRole = UserRoleEnum.getEnumByValue(user.getUserRole());
         //校验权限
