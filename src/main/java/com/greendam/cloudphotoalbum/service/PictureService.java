@@ -1,6 +1,9 @@
 package com.greendam.cloudphotoalbum.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.greendam.cloudphotoalbum.model.dto.PictureQueryDTO;
+import com.greendam.cloudphotoalbum.model.dto.PictureUpdateDTO;
 import com.greendam.cloudphotoalbum.model.dto.PictureUploadDTO;
 import com.greendam.cloudphotoalbum.model.entity.Picture ;
 import com.greendam.cloudphotoalbum.model.vo.PictureVO;
@@ -22,4 +25,31 @@ public interface PictureService extends IService<Picture> {
      * @return 图片视图
      */
     PictureVO uploadPicture(MultipartFile file, PictureUploadDTO pictureUploadDTO, HttpServletRequest request);
+
+    /**
+     * 获取图片查询条件
+     * @param pictureQueryRequest
+     * @return 查询包装器
+     */
+    QueryWrapper<Picture> getQueryWrapper(PictureQueryDTO pictureQueryRequest);
+
+    /**
+     * 根据图片ID删除图片
+     * @param pictureId 图片ID
+     * @param request HTTP请求对象，用于获取用户信息等
+     */
+    void deletePicture(Long pictureId, HttpServletRequest request);
+
+    /**
+     * 更新图片信息(管理员)
+     * @param pictureUpdateDTO
+     * @return
+     */
+    boolean updatePicture(PictureUpdateDTO pictureUpdateDTO);
+    /**
+     * 获取图片视图对象
+     * @param picture 图片实体
+     * @return 图片视图对象
+     */
+    PictureVO getPictureVO(Picture picture);
 }

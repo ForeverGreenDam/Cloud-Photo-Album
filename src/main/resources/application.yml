@@ -11,6 +11,10 @@ spring:
       password: ${greendam.datasource.password}
   profiles:
     active: dev
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
