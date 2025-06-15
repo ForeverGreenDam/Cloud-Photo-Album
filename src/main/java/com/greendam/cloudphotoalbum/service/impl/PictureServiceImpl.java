@@ -13,11 +13,13 @@ import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.exception.ThrowUtils;
 import com.greendam.cloudphotoalbum.mapper.UserMapper;
 import com.greendam.cloudphotoalbum.model.dto.PictureQueryDTO;
+import com.greendam.cloudphotoalbum.model.dto.PictureReviewDTO;
 import com.greendam.cloudphotoalbum.model.dto.PictureUpdateDTO;
 import com.greendam.cloudphotoalbum.model.dto.PictureUploadDTO;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
 import com.greendam.cloudphotoalbum.mapper.PictureMapper;
 import com.greendam.cloudphotoalbum.model.entity.User;
+import com.greendam.cloudphotoalbum.model.enums.PictureReviewStatusEnum;
 import com.greendam.cloudphotoalbum.model.vo.PictureVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.model.vo.UserVO;
@@ -67,6 +69,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         if(pictureId!=null){
             Picture exit = pictureMapper.selectById(pictureId);
             ThrowUtils.throwIf(exit==null,ErrorCode.PARAMS_ERROR);
+            //如果存在，检查用户是否有权限更新该图片
+            ThrowUtils.throwIf(!exit.getUserId().equals(userService.getUser(request).getId()) &&
+                    !UserConstant.ADMIN_ROLE.equals(userService.getUser(request).getUserRole()),
+                    ErrorCode.NOT_AUTH_ERROR, "无权限更新该图片");
         }
         String originalFilename = file.getOriginalFilename();
         // 获取文件后缀
@@ -205,6 +211,22 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         UserVO userVO = BeanUtil.copyProperties(user, UserVO.class);
         pictureVO.setUser(userVO);
         return pictureVO;
+    }
+
+    @Override
+    public void pictureReview(PictureReviewDTO pictureReviewDTO, Long id) {
+        //1.获取旧图片
+        Picture oldPicture = pictureMapper.selectById(pictureReviewDTO.getId());
+        ThrowUtils.throwIf(oldPicture==null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+        //2.检查审核状态
+        Integer reviewStatus = pictureReviewDTO.getReviewStatus();
+        PictureReviewStatusEnum statusEnum = PictureReviewStatusEnum.getEnumByValue(reviewStatus);
+        ThrowUtils.throwIf( !PictureReviewStatusEnum.REVIEWING.equals(statusEnum), ErrorCode.PARAMS_ERROR, "请勿重复审核");
+        //3.更新审核状态
+        Picture newPicture = new Picture();
+        BeanUtil.copyProperties(pictureReviewDTO, newPicture);
+        int i = pictureMapper.updateById(newPicture);
+        ThrowUtils.throwIf(i == 0, ErrorCode.OPERATION_ERROR, "审核失败");
     }
 
 }

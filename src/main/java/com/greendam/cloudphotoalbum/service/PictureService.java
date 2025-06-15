@@ -3,6 +3,7 @@ package com.greendam.cloudphotoalbum.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.greendam.cloudphotoalbum.model.dto.PictureQueryDTO;
+import com.greendam.cloudphotoalbum.model.dto.PictureReviewDTO;
 import com.greendam.cloudphotoalbum.model.dto.PictureUpdateDTO;
 import com.greendam.cloudphotoalbum.model.dto.PictureUploadDTO;
 import com.greendam.cloudphotoalbum.model.entity.Picture ;
@@ -42,7 +43,7 @@ public interface PictureService extends IService<Picture> {
 
     /**
      * 更新图片信息(管理员)
-     * @param pictureUpdateDTO
+     * @param pictureUpdateDTO 图片更新数据传输对象
      * @return
      */
     boolean updatePicture(PictureUpdateDTO pictureUpdateDTO);
@@ -52,4 +53,11 @@ public interface PictureService extends IService<Picture> {
      * @return 图片视图对象
      */
     PictureVO getPictureVO(Picture picture);
+
+    /**
+     * 图片审核
+     * @param pictureReviewDTO 图片审核数据传输对象
+     * @param id 审核员id
+     */
+    void pictureReview(PictureReviewDTO pictureReviewDTO, Long id);
 }

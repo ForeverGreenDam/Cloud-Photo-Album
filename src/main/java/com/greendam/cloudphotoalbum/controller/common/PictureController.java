@@ -10,6 +10,7 @@ import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.exception.ThrowUtils;
 import com.greendam.cloudphotoalbum.model.dto.PictureQueryDTO;
+import com.greendam.cloudphotoalbum.model.dto.PictureReviewDTO;
 import com.greendam.cloudphotoalbum.model.dto.PictureUpdateDTO;
 import com.greendam.cloudphotoalbum.model.dto.PictureUploadDTO;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
@@ -49,7 +50,6 @@ public class PictureController {
      * @return
      */
     @PostMapping("/upload")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<PictureVO> uploadPicture(@RequestParam("file")MultipartFile file,
                                                  PictureUploadDTO pictureUploadDTO,
                                                  HttpServletRequest request) {
@@ -172,6 +172,19 @@ public class PictureController {
         ThrowUtils.throwIf(!ok, ErrorCode.OPERATION_ERROR);
         return BaseResponse.success();
 
+    }
+    /**
+     * 管理员审核接口
+     * @param pictureReviewDTO
+     * @Param request
+     */
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse reviewPicture(@RequestBody PictureReviewDTO pictureReviewDTO,HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureReviewDTO == null || pictureReviewDTO.getId() == null, ErrorCode.PARAMS_ERROR);
+        UserLoginVO user =userService.getUser(request);
+        pictureService.pictureReview(pictureReviewDTO, user.getId());
+        return BaseResponse.success();
     }
 }
 
