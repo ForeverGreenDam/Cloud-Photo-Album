@@ -8,6 +8,7 @@ import com.greendam.cloudphotoalbum.model.dto.PictureUpdateDTO;
 import com.greendam.cloudphotoalbum.model.dto.PictureUploadDTO;
 import com.greendam.cloudphotoalbum.model.entity.Picture ;
 import com.greendam.cloudphotoalbum.model.vo.PictureVO;
+import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -60,4 +61,13 @@ public interface PictureService extends IService<Picture> {
      * @param id 审核员id
      */
     void pictureReview(PictureReviewDTO pictureReviewDTO, Long id);
+
+    /**
+     * 通过URL上传图片
+     * @param fileUrl 图片的URL地址
+     * @param pictureUploadDTO 包含图片上传信息的请求体
+     * @param loginUser 登录用户信息
+     * @return
+     */
+    PictureVO uploadPictureByUrl(String fileUrl, PictureUploadDTO pictureUploadDTO, UserLoginVO loginUser);
 }

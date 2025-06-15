@@ -15,4 +15,8 @@ public class PictureUploadDTO implements Serializable {
      * 图片ID
      */
     private Long id;
+    /**
+     * 图片地址（通过URL传递图片时使用）
+     */
+    private String fileUrl;
 }

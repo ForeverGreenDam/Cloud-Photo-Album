@@ -14,9 +14,11 @@ import com.greendam.cloudphotoalbum.model.dto.PictureReviewDTO;
 import com.greendam.cloudphotoalbum.model.dto.PictureUpdateDTO;
 import com.greendam.cloudphotoalbum.model.dto.PictureUploadDTO;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
+import com.greendam.cloudphotoalbum.model.entity.User;
 import com.greendam.cloudphotoalbum.model.enums.PictureReviewStatusEnum;
 import com.greendam.cloudphotoalbum.model.vo.PictureVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
+import com.greendam.cloudphotoalbum.model.vo.UserVO;
 import com.greendam.cloudphotoalbum.service.PictureService;
 import com.greendam.cloudphotoalbum.service.UserService;
 import com.sun.istack.internal.NotNull;
@@ -51,6 +53,7 @@ public class PictureController {
      * @return
      */
     @PostMapping("/upload")
+    @AuthCheck
     public BaseResponse<PictureVO> uploadPicture(@RequestParam("file")MultipartFile file,
                                                  PictureUploadDTO pictureUploadDTO,
                                                  HttpServletRequest request) {
@@ -59,10 +62,25 @@ public class PictureController {
         return BaseResponse.success(VO);
     }
     /**
+     * 通过 URL 上传图片
+     * @param pictureUploadRequest 包含图片 URL 和其他上传信息的请求体
+     * @param request HTTP 请求对象，用于获取用户信息
+     */
+    @PostMapping("/upload/url")
+    @AuthCheck
+    public BaseResponse<PictureVO> uploadPictureByUrl(
+            @RequestBody PictureUploadDTO pictureUploadRequest,
+            HttpServletRequest request) {
+        UserLoginVO loginUser = userService.getUser(request);
+        String fileUrl = pictureUploadRequest.getFileUrl();
+        PictureVO pictureVO = pictureService.uploadPictureByUrl(fileUrl, pictureUploadRequest, loginUser);
+        return BaseResponse.success(pictureVO);
+    }
+
+    /**
      * 根据图片ID删除图片
      * @param deleteRequest
      * @param request
-     * @return
      */
     @PostMapping("/delete")
     @AuthCheck

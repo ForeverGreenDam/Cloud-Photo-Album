@@ -4,11 +4,16 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpResponse;
+import cn.hutool.http.HttpStatus;
+import cn.hutool.http.HttpUtil;
+import cn.hutool.http.Method;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.greendam.cloudphotoalbum.common.AliOssUtil;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
+import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.exception.ThrowUtils;
 import com.greendam.cloudphotoalbum.mapper.UserMapper;
@@ -38,7 +43,11 @@ import javax.servlet.http.HttpServletRequest;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -227,7 +236,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Picture oldPicture = pictureMapper.selectById(pictureReviewDTO.getId());
         ThrowUtils.throwIf(oldPicture==null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
         //2.检查审核状态
-        Integer reviewStatus = pictureReviewDTO.getReviewStatus();
+        Integer reviewStatus = oldPicture.getReviewStatus();
         PictureReviewStatusEnum statusEnum = PictureReviewStatusEnum.getEnumByValue(reviewStatus);
         ThrowUtils.throwIf( !PictureReviewStatusEnum.REVIEWING.equals(statusEnum), ErrorCode.PARAMS_ERROR, "请勿重复审核");
         //3.更新审核状态
@@ -238,6 +247,124 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         int i = pictureMapper.updateById(newPicture);
         ThrowUtils.throwIf(i == 0, ErrorCode.OPERATION_ERROR, "审核失败");
     }
+
+    @Override
+    public PictureVO uploadPictureByUrl(String fileUrl, PictureUploadDTO pictureUploadDTO, UserLoginVO loginUser) {
+        //判断是否为更新操作（即已经上传过图片，但是不满意，准备换为别的图片）
+        Long pictureId = null;
+        if(pictureUploadDTO!=null){pictureId=pictureUploadDTO.getId();}
+        //如果pictureId不为空，说明是更新操作, 先查数据库该对象是否存在
+        if(pictureId!=null){
+            Picture exit = pictureMapper.selectById(pictureId);
+            ThrowUtils.throwIf(exit==null,ErrorCode.PARAMS_ERROR);
+            //如果存在，检查用户是否有权限更新该图片
+            ThrowUtils.throwIf(!exit.getUserId().equals(loginUser.getId()) &&
+                            !UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole()),
+                    ErrorCode.NOT_AUTH_ERROR, "无权限更新该图片");
+        }
+        //验证图片URL的合法性,同时获取文件后缀
+        String extension=validPicture(fileUrl);
+        ThrowUtils.throwIf(extension==null, ErrorCode.PARAMS_ERROR, "不支持HEAD请求的图片地址");
+        File file=null;
+        try {
+        //从URL获取文件
+        String uuid = UUID.randomUUID().toString();
+        file=File.createTempFile(uuid,null);
+        HttpUtil.downloadFile(fileUrl, file);
+        // 生成唯一文件名
+        String newFileName = uuid +'.'+ extension;
+            //上传文件获得url
+            String url = aliOssUtil.upload(Files.readAllBytes(file.toPath()), newFileName);
+            //创建图片对象
+            Picture picture = new Picture();
+            //设置基本信息
+            picture.setUrl(url);
+            picture.setName(newFileName);
+            picture.setPicFormat(extension);
+            picture.setUserId(loginUser.getId());
+            //图片解析
+            BufferedImage image = ImageIO.read(file);
+            picture.setPicSize(file.length());
+            picture.setPicWidth(image.getWidth());
+            picture.setPicHeight(image.getHeight());
+            picture.setPicScale((double)image.getWidth()/ (double) image.getHeight());
+            if(pictureId!=null){
+                //更新操作，需要手动设置图片id以及更新时间
+                picture.setId(pictureId);
+                picture.setEditTime(LocalDateTime.now());
+                pictureMapper.updateById(picture);
+            }else{
+                //新建操作，直接插入
+                pictureMapper.insert(picture);
+            }
+            return PictureVO.objToVo(picture);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }finally {
+            if(file!=null){
+                boolean delete = file.delete();
+                if(!delete){
+                    log.error("临时文件删除失败，路径：{}", file.getAbsolutePath());
+                }
+            }
+        }
+    }
+    /**
+     * 验证图片URL的合法性
+     * @param fileUrl 图片的URL地址
+     */
+    private String validPicture(String fileUrl) {
+        ThrowUtils.throwIf(StrUtil.isBlank(fileUrl), ErrorCode.PARAMS_ERROR, "文件地址不能为空");
+
+        try {
+            // 1. 验证 URL 格式
+            // 验证是否是合法的 URL
+            new URL(fileUrl);
+        } catch (MalformedURLException e) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件地址格式不正确");
+        }
+
+        // 2. 校验 URL 协议
+        ThrowUtils.throwIf(!(fileUrl.startsWith("http://") || fileUrl.startsWith("https://")),
+                ErrorCode.PARAMS_ERROR, "仅支持 HTTP 或 HTTPS 协议的文件地址");
+
+        // 3. 发送 HEAD 请求以验证文件是否存在
+        HttpResponse response = null;
+        try {
+            response = HttpUtil.createRequest(Method.HEAD, fileUrl).execute();
+            // 未正常返回，无需执行其他判断
+            if (response.getStatus() != HttpStatus.HTTP_OK) {
+                return null;
+            }
+            // 4. 校验文件类型
+            String contentType = response.header("Content-Type");
+            if (StrUtil.isNotBlank(contentType)) {
+                // 允许的图片类型
+                final List<String> ALLOW_CONTENT_TYPES = Arrays.asList("image/jpeg", "image/jpg", "image/png", "image/webp");
+                ThrowUtils.throwIf(!ALLOW_CONTENT_TYPES.contains(contentType.toLowerCase()),
+                        ErrorCode.PARAMS_ERROR, "文件类型错误");
+            }
+            // 5. 校验文件大小
+            String contentLengthStr = response.header("Content-Length");
+            if (StrUtil.isNotBlank(contentLengthStr)) {
+                try {
+                    long contentLength = Long.parseLong(contentLengthStr);
+                    // 限制文件大小为 10MB
+                    final long TWO_MB = 10 * 1024 * 1024L;
+                    ThrowUtils.throwIf(contentLength > TWO_MB, ErrorCode.PARAMS_ERROR, "文件大小不能超过 10M");
+                } catch (NumberFormatException e) {
+                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件大小格式错误");
+                }
+            }
+            // 6. 返回文件类型
+            return contentType.toLowerCase().substring(contentType.lastIndexOf('/')+1);
+        } finally {
+            if (response != null) {
+                response.close();
+            }
+        }
+    }
+
 
 }
 
