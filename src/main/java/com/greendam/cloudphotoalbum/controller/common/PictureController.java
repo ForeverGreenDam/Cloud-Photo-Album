@@ -14,6 +14,7 @@ import com.greendam.cloudphotoalbum.model.dto.PictureReviewDTO;
 import com.greendam.cloudphotoalbum.model.dto.PictureUpdateDTO;
 import com.greendam.cloudphotoalbum.model.dto.PictureUploadDTO;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
+import com.greendam.cloudphotoalbum.model.enums.PictureReviewStatusEnum;
 import com.greendam.cloudphotoalbum.model.vo.PictureVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.service.PictureService;
@@ -113,6 +114,8 @@ public class PictureController {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         Picture picture = pictureService.getById(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
+        // 检查图片审核状态
+        ThrowUtils.throwIf(PictureReviewStatusEnum.PASS.getValue()!=picture.getReviewStatus(),ErrorCode.FORBIDDEN_ERROR,"图片未审核");
         return BaseResponse.success(pictureService.getPictureVO(picture));
     }
 
@@ -139,6 +142,8 @@ public class PictureController {
     public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody @NotNull PictureQueryDTO pictureQueryDTO) {
         long current = pictureQueryDTO.getCurrent();
         long pageSize = pictureQueryDTO.getPageSize();
+        //从用户端登录只能看到审核通过的图片
+        pictureQueryDTO.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
         Page<Picture> page = pictureService.page(new Page<>(current, pageSize),
                 pictureService.getQueryWrapper(pictureQueryDTO));
         // 将查询结果转换为VO对象
@@ -151,6 +156,11 @@ public class PictureController {
         pictureVOPage.setRecords(collect);
         return BaseResponse.success(pictureVOPage);
     }
+    /**
+     * 编辑图片信息（用户）
+     * @param pictureUpdateDTO
+     * @param request
+     */
     @PostMapping("/edit")
     @AuthCheck
     public BaseResponse editPicture(@RequestBody PictureUpdateDTO pictureUpdateDTO,HttpServletRequest request) {
@@ -168,6 +178,15 @@ public class PictureController {
         BeanUtil.copyProperties(pictureUpdateDTO, picture);
         picture.setTags(JSONUtil.toJsonStr(picture.getTags()));
         picture.setEditTime(LocalDateTime.now());
+        //设置图片审核状态(如果是管理员使用则自动过审，否则设置为审核中)
+        if (UserConstant.ADMIN_ROLE.equals(userRole)) {
+            picture.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+            picture.setReviewerId(user.getId());
+            picture.setReviewTime(LocalDateTime.now());
+            picture.setReviewMessage("管理员自动通过");
+        } else {
+            picture.setReviewStatus(PictureReviewStatusEnum.REVIEWING.getValue());
+        }
         boolean ok = pictureService.updateById(picture);
         ThrowUtils.throwIf(!ok, ErrorCode.OPERATION_ERROR);
         return BaseResponse.success();
