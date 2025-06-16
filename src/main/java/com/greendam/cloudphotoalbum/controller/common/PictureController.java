@@ -9,10 +9,7 @@ import com.greendam.cloudphotoalbum.common.DeleteRequest;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.exception.ThrowUtils;
-import com.greendam.cloudphotoalbum.model.dto.PictureQueryDTO;
-import com.greendam.cloudphotoalbum.model.dto.PictureReviewDTO;
-import com.greendam.cloudphotoalbum.model.dto.PictureUpdateDTO;
-import com.greendam.cloudphotoalbum.model.dto.PictureUploadDTO;
+import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
 import com.greendam.cloudphotoalbum.model.entity.User;
 import com.greendam.cloudphotoalbum.model.enums.PictureReviewStatusEnum;
@@ -222,6 +219,20 @@ public class PictureController {
         UserLoginVO user =userService.getUser(request);
         pictureService.pictureReview(pictureReviewDTO, user.getId());
         return BaseResponse.success();
+    }
+    /**
+     * 批量抓取图片接口
+     * @param pictureUploadByBatchDTO
+     * @param request
+     * @return 成功上传的图片数量
+     */
+    @PostMapping("/upload/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Integer> uploadPictureBatch(@RequestBody PictureUploadByBatchDTO pictureUploadByBatchDTO, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureUploadByBatchDTO==null, ErrorCode.PARAMS_ERROR);
+        UserLoginVO user =userService.getUser(request);
+        int uploadCount = pictureService.uploadPictureBatch(pictureUploadByBatchDTO, user);
+        return BaseResponse.success(uploadCount);
     }
 }
 

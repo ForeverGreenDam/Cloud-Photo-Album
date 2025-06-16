@@ -2,10 +2,7 @@ package com.greendam.cloudphotoalbum.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.greendam.cloudphotoalbum.model.dto.PictureQueryDTO;
-import com.greendam.cloudphotoalbum.model.dto.PictureReviewDTO;
-import com.greendam.cloudphotoalbum.model.dto.PictureUpdateDTO;
-import com.greendam.cloudphotoalbum.model.dto.PictureUploadDTO;
+import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.entity.Picture ;
 import com.greendam.cloudphotoalbum.model.vo.PictureVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
@@ -70,4 +67,12 @@ public interface PictureService extends IService<Picture> {
      * @return
      */
     PictureVO uploadPictureByUrl(String fileUrl, PictureUploadDTO pictureUploadDTO, UserLoginVO loginUser);
+
+    /**
+     * 批量抓取图片
+     * @param pictureUploadByBatchDTO 批量抓取图片数据传输对象
+     * @param user 登录用户信息
+     * @return 成功上传的图片数量
+     */
+    int uploadPictureBatch(PictureUploadByBatchDTO pictureUploadByBatchDTO, UserLoginVO user);
 }

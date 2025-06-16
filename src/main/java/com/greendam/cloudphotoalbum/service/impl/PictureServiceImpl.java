@@ -17,10 +17,7 @@ import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.exception.ThrowUtils;
 import com.greendam.cloudphotoalbum.mapper.UserMapper;
-import com.greendam.cloudphotoalbum.model.dto.PictureQueryDTO;
-import com.greendam.cloudphotoalbum.model.dto.PictureReviewDTO;
-import com.greendam.cloudphotoalbum.model.dto.PictureUpdateDTO;
-import com.greendam.cloudphotoalbum.model.dto.PictureUploadDTO;
+import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
 import com.greendam.cloudphotoalbum.mapper.PictureMapper;
 import com.greendam.cloudphotoalbum.model.entity.User;
@@ -31,6 +28,10 @@ import com.greendam.cloudphotoalbum.model.vo.UserVO;
 import com.greendam.cloudphotoalbum.service.PictureService ;
 import com.greendam.cloudphotoalbum.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -109,6 +110,14 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             picture.setPicWidth(image.getWidth());
             picture.setPicHeight(image.getHeight());
             picture.setPicScale((double)image.getWidth()/ (double) image.getHeight());
+            //如果是管理员上传，直接通过审核
+            if(UserConstant.ADMIN_ROLE.equals(userService.getUser(request).getUserRole()))
+            {
+                picture.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+                picture.setReviewerId(userService.getUser(request).getId());
+                picture.setReviewMessage("管理员上传，自动通过审核");
+                picture.setReviewTime(LocalDateTime.now());
+            }
             if(pictureId!=null){
                 //更新操作，需要手动设置图片id以及更新时间
                 picture.setId(pictureId);
@@ -184,7 +193,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             }
         }
         // 排序
-        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
+        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), "ascend".equals(sortOrder), sortField);
         return queryWrapper;
     }
 
@@ -288,6 +297,18 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             picture.setPicWidth(image.getWidth());
             picture.setPicHeight(image.getHeight());
             picture.setPicScale((double)image.getWidth()/ (double) image.getHeight());
+            //如果是管理员上传，直接通过审核
+            if(UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole()))
+            {
+                picture.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+                picture.setReviewerId(loginUser.getId());
+                picture.setReviewMessage("管理员上传，自动通过审核");
+                picture.setReviewTime(LocalDateTime.now());
+            }
+            //如果是批量抓图，则图片名称重置
+            if(pictureUploadDTO!=null&&pictureUploadDTO.getPicName()!=null){
+                picture.setName(pictureUploadDTO.getPicName());
+            }
             if(pictureId!=null){
                 //更新操作，需要手动设置图片id以及更新时间
                 picture.setId(pictureId);
@@ -309,6 +330,56 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             }
         }
     }
+
+    @Override
+    public int uploadPictureBatch(PictureUploadByBatchDTO pictureUploadByBatchDTO, UserLoginVO user) {
+        //获取请求参数
+        String searchText = pictureUploadByBatchDTO.getSearchText();
+        ThrowUtils.throwIf(StrUtil.isBlank(searchText), ErrorCode.PARAMS_ERROR, "抓取关键词不能为空");
+        Integer count = pictureUploadByBatchDTO.getCount();
+        ThrowUtils.throwIf(count > 30, ErrorCode.PARAMS_ERROR," 抓取图片数量不能超过30");
+        //使用jsoup抓取图片
+        String url="https://cn.bing.com/images/async?q="+searchText+"&mmasync=1";
+        Document doc;
+        try {
+            // 发送 GET 请求获取HTML文档
+            doc = Jsoup.connect(url).get();
+        } catch (IOException e) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR,"获取页面失败");
+        }
+        Element div = doc.getElementsByClass("dgControl").first();
+        ThrowUtils.throwIf(div==null, ErrorCode.OPERATION_ERROR, "获取元素失败");
+        Elements imgElementList = div.select("img.mimg");
+        int successCount = 1;
+        for (Element element : imgElementList) {
+            String src = element.attr("src");
+            if (StrUtil.isBlank(src)) {
+                // 如果没有src属性，跳过
+                log.info("当前连接为空，已跳过");
+                continue;
+            }
+            //处理地址，剪切额外参数
+            int index = src.indexOf("?");
+            if(index>-1){
+                src=src.substring(0,index);
+            }
+            try {
+                //上传图片, 设置图片名称
+                PictureUploadDTO pictureUploadDTO = new PictureUploadDTO();
+                pictureUploadDTO.setPicName(searchText+successCount);
+                PictureVO pictureVO = uploadPictureByUrl(src, pictureUploadDTO, user);
+                log.info("上传图片成功，图片id：{}",pictureVO.getId());
+                successCount++;
+            } catch (Exception e) {
+               log.info("图片上传失败：{}",e.getMessage());
+               continue;
+            }
+            //达到指定数量就退出循环
+            if(successCount>count){break;}
+        }
+        return successCount;
+    }
+
     /**
      * 验证图片URL的合法性
      * @param fileUrl 图片的URL地址
