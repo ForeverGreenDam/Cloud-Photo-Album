@@ -3,12 +3,26 @@ server:
   servlet:
     context-path: /api
 spring:
+  redis:
+    cluster:
+      nodes: ${greendam.redis.cluster.nodes}
   datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
     druid:
+      initialSize: 5
+      minIdle: 5
+      maxActive: 20
+      maxWait: 60000
       driver-class-name: ${greendam.datasource.driver-class-name}
       url: jdbc:mysql://${greendam.datasource.host}:${greendam.datasource.port}/${greendam.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
       username: ${greendam.datasource.username}
       password: ${greendam.datasource.password}
+      stat-view-servlet:
+        enabled: true
+        url-pattern: /druid/*
+        login-username: ${greendam.datasource.stat-view-servlet.login-username}
+        login-password: ${greendam.datasource.stat-view-servlet.login-password}
+
   profiles:
     active: dev
   servlet:
