@@ -11,11 +11,9 @@ import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.exception.ThrowUtils;
 import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
-import com.greendam.cloudphotoalbum.model.entity.User;
 import com.greendam.cloudphotoalbum.model.enums.PictureReviewStatusEnum;
 import com.greendam.cloudphotoalbum.model.vo.PictureVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
-import com.greendam.cloudphotoalbum.model.vo.UserVO;
 import com.greendam.cloudphotoalbum.service.PictureService;
 import com.greendam.cloudphotoalbum.service.UserService;
 import com.sun.istack.internal.NotNull;
@@ -191,7 +189,9 @@ public class PictureController {
                 !picture.getUserId().equals(user.getId()), ErrorCode.NOT_AUTH_ERROR, "无权限编辑该图片");
         // 更新图片信息
         BeanUtil.copyProperties(pictureUpdateDTO, picture);
-        picture.setTags(JSONUtil.toJsonStr(picture.getTags()));
+        //补充：单独处理tags字段，将其转换为JSON字符串
+        List<String> tags = pictureUpdateDTO.getTags();
+        picture.setTags(JSONUtil.toJsonStr(tags));
         picture.setEditTime(LocalDateTime.now());
         //设置图片审核状态(如果是管理员使用则自动过审，否则设置为审核中)
         if (UserConstant.ADMIN_ROLE.equals(userRole)) {

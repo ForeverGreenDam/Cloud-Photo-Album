@@ -11,6 +11,7 @@ import java.util.Date;
 
 /**
  * 图片
+ * @author ForeverGreenDam
  * @TableName picture
  */
 @TableName(value ="picture")

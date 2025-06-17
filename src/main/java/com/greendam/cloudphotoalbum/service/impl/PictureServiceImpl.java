@@ -247,7 +247,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         //2.检查审核状态
         Integer reviewStatus = oldPicture.getReviewStatus();
         PictureReviewStatusEnum statusEnum = PictureReviewStatusEnum.getEnumByValue(reviewStatus);
-        ThrowUtils.throwIf( !PictureReviewStatusEnum.REVIEWING.equals(statusEnum), ErrorCode.PARAMS_ERROR, "请勿重复审核");
         //3.更新审核状态
         Picture newPicture = new Picture();
         BeanUtil.copyProperties(pictureReviewDTO, newPicture);
