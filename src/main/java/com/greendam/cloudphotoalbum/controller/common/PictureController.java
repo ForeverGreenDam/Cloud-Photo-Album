@@ -3,6 +3,8 @@ package com.greendam.cloudphotoalbum.controller.common;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.greendam.cloudphotoalbum.annotation.AuthCheck;
 import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.common.DeleteRequest;
@@ -16,18 +18,14 @@ import com.greendam.cloudphotoalbum.model.vo.PictureVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.service.PictureService;
 import com.greendam.cloudphotoalbum.service.UserService;
-import com.sun.istack.internal.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
-
-
+import java.util.concurrent.TimeUnit;
 /**
  * 图片控制器类，用于处理与图片相关的请求
  * @author ForeverGreenDam
@@ -37,9 +35,16 @@ import java.util.stream.Collectors;
 public class PictureController {
     @Resource
     private PictureService pictureService;
-    @Autowired
+    @Resource
     private UserService userService;
-
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+    private final Cache<String, String> LOCAL_CACHE =
+            Caffeine.newBuilder().initialCapacity(1024)
+                    .maximumSize(10000L)
+                    // 缓存 5 分钟移除
+                    .expireAfterWrite(5L, TimeUnit.MINUTES)
+                    .build();
     /**
      * 图片上传服务接口
      * @param file
@@ -54,6 +59,8 @@ public class PictureController {
                                                  HttpServletRequest request) {
         ThrowUtils.throwIf(file.isEmpty(), ErrorCode.PARAMS_ERROR);
       PictureVO VO=  pictureService.uploadPicture(file,pictureUploadDTO,request);
+      //清除缓存
+       pictureService.flashAllPictureCache();
         return BaseResponse.success(VO);
     }
     /**
@@ -69,6 +76,8 @@ public class PictureController {
         UserLoginVO loginUser = userService.getUser(request);
         String fileUrl = pictureUploadRequest.getFileUrl();
         PictureVO pictureVO = pictureService.uploadPictureByUrl(fileUrl, pictureUploadRequest, loginUser);
+        //清除缓存
+        pictureService.flashAllPictureCache();
         return BaseResponse.success(pictureVO);
     }
 
@@ -84,7 +93,8 @@ public class PictureController {
         ThrowUtils.throwIf(deleteRequest == null || deleteRequest.getId() == null, ErrorCode.PARAMS_ERROR);
         Long pictureId = deleteRequest.getId();
         pictureService.deletePicture(pictureId, request);
-
+        //清除缓存
+        pictureService.flashAllPictureCache();
         return BaseResponse.success();
     }
     /**
@@ -99,6 +109,8 @@ public class PictureController {
         ThrowUtils.throwIf(pictureUpdateDTO == null || pictureUpdateDTO.getId() == null, ErrorCode.PARAMS_ERROR);
         boolean ok = pictureService.updatePicture(pictureUpdateDTO);
         ThrowUtils.throwIf(!ok, ErrorCode.OPERATION_ERROR);
+        //清除缓存
+        pictureService.flashAllPictureCache();
         return BaseResponse.success();
     }
     /**
@@ -139,7 +151,7 @@ public class PictureController {
      */
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Page<Picture>> listPicturesByPage(@RequestBody @NotNull PictureQueryDTO pictureQueryDTO){
+    public BaseResponse<Page<Picture>> listPicturesByPage(@RequestBody  PictureQueryDTO pictureQueryDTO){
         long current = pictureQueryDTO.getCurrent();
         long pageSize = pictureQueryDTO.getPageSize();
         Page<Picture> page = pictureService.page(new Page<>(current, pageSize),
@@ -152,22 +164,9 @@ public class PictureController {
      * @return 分页查询结果
      */
     @PostMapping("/list/page/vo")
-    public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody @NotNull PictureQueryDTO pictureQueryDTO) {
-        long current = pictureQueryDTO.getCurrent();
-        long pageSize = pictureQueryDTO.getPageSize();
-        //从用户端登录只能看到审核通过的图片
-        pictureQueryDTO.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
-        Page<Picture> page = pictureService.page(new Page<>(current, pageSize),
-                pictureService.getQueryWrapper(pictureQueryDTO));
-        // 将查询结果转换为VO对象
-        List<PictureVO> collect = page.getRecords().stream()
-                        .map(picture -> pictureService.getPictureVO(picture))
-                .collect(Collectors.toList());
-        // 创建新的Page对象用于返回
-        Page<PictureVO> pictureVOPage = new Page<>();
-        BeanUtil.copyProperties(page, pictureVOPage,true);
-        pictureVOPage.setRecords(collect);
-        return BaseResponse.success(pictureVOPage);
+    public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryDTO pictureQueryDTO) {
+        ThrowUtils.throwIf(pictureQueryDTO == null, ErrorCode.PARAMS_ERROR);
+        return BaseResponse.success(pictureService.listPictureVOByPage(pictureQueryDTO));
     }
     /**
      * 编辑图片信息（用户）
@@ -204,6 +203,8 @@ public class PictureController {
         }
         boolean ok = pictureService.updateById(picture);
         ThrowUtils.throwIf(!ok, ErrorCode.OPERATION_ERROR);
+        //清除缓存
+        pictureService.flashAllPictureCache();
         return BaseResponse.success();
 
     }
@@ -218,6 +219,8 @@ public class PictureController {
         ThrowUtils.throwIf(pictureReviewDTO == null || pictureReviewDTO.getId() == null, ErrorCode.PARAMS_ERROR);
         UserLoginVO user =userService.getUser(request);
         pictureService.pictureReview(pictureReviewDTO, user.getId());
+        //清除缓存
+        pictureService.flashAllPictureCache();
         return BaseResponse.success();
     }
     /**
@@ -232,6 +235,8 @@ public class PictureController {
         ThrowUtils.throwIf(pictureUploadByBatchDTO==null, ErrorCode.PARAMS_ERROR);
         UserLoginVO user =userService.getUser(request);
         int uploadCount = pictureService.uploadPictureBatch(pictureUploadByBatchDTO, user);
+        //清除缓存
+        pictureService.flashAllPictureCache();
         return BaseResponse.success(uploadCount);
     }
 }

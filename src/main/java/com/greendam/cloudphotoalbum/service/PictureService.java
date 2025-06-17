@@ -1,6 +1,7 @@
 package com.greendam.cloudphotoalbum.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.entity.Picture ;
@@ -53,6 +54,13 @@ public interface PictureService extends IService<Picture> {
     PictureVO getPictureVO(Picture picture);
 
     /**
+     * 分页查询图片视图对象
+     * @param pictureQueryDTO  图片查询数据传输对象
+     * @return 分页的图片视图对象列表
+     */
+    Page<PictureVO> listPictureVOByPage(PictureQueryDTO pictureQueryDTO);
+
+    /**
      * 图片审核
      * @param pictureReviewDTO 图片审核数据传输对象
      * @param id 审核员id
@@ -75,4 +83,9 @@ public interface PictureService extends IService<Picture> {
      * @return 成功上传的图片数量
      */
     int uploadPictureBatch(PictureUploadByBatchDTO pictureUploadByBatchDTO, UserLoginVO user);
+
+    /**
+     * 清除图片缓存
+     */
+    void flashAllPictureCache( ) ;
 }

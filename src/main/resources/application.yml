@@ -3,9 +3,6 @@ server:
   servlet:
     context-path: /api
 spring:
-  redis:
-    cluster:
-      nodes: ${greendam.redis.cluster.nodes}
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
@@ -29,6 +26,9 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+  redis:
+    cluster:
+      nodes: ${greendam.redis.cluster.nodes}
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
