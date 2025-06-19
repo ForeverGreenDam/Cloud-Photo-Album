@@ -32,6 +32,7 @@ import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.model.vo.UserVO;
 import com.greendam.cloudphotoalbum.service.PictureService ;
 import com.greendam.cloudphotoalbum.service.UserService;
+import com.luciad.imageio.webp.WebPWriteParam;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -46,7 +47,11 @@ import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.FileImageOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -108,8 +113,18 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         String newFileName = UUID.randomUUID().toString() + extension;
         File pictureFile=null;
         try {
+            //将MultipartFile转换为File,供ImageIO读取
+            pictureFile=File.createTempFile(newFileName,extension);
+            FileCopyUtils.copy(file.getBytes(),pictureFile);
+            //将图片转换为WebP格式
+            boolean webp = toWebp(pictureFile);
+            //如果转换成功，则更改文件名和后缀
+            if(webp){
+                extension = ".webp";
+                newFileName = newFileName.substring(0, newFileName.lastIndexOf(".")) + extension;
+            }
             //上传文件获得url
-            String url = aliOssUtil.upload(file.getBytes(), newFileName);
+            String url = aliOssUtil.upload(Files.readAllBytes(pictureFile.toPath()), newFileName);
             //创建图片对象
             Picture picture = new Picture();
             //设置基本信息
@@ -117,13 +132,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             picture.setName(originalFilename);
             picture.setPicFormat(extension);
             picture.setUserId(userService.getUser(request).getId());
-
-            //将MultipartFile转换为File,供ImageIO读取
-            pictureFile=File.createTempFile(newFileName,null);
-            FileCopyUtils.copy(file.getBytes(),pictureFile);
             //图片解析
             BufferedImage image = ImageIO.read(pictureFile);
-            picture.setPicSize(file.getSize());
+            picture.setPicSize(pictureFile.length());
             picture.setPicWidth(image.getWidth());
             picture.setPicHeight(image.getHeight());
             picture.setPicScale((double)image.getWidth()/ (double) image.getHeight());
@@ -337,9 +348,14 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         try {
         //从URL获取文件
         String uuid = UUID.randomUUID().toString();
-        file=File.createTempFile(uuid,null);
+        file=File.createTempFile(uuid,extension);
         HttpUtil.downloadFile(fileUrl, file);
-        // 生成唯一文件名
+        //转为webp格式
+            boolean webp = toWebp(file);
+            if(webp){
+                extension = "webp";
+            }
+            // 生成唯一文件名
         String newFileName = uuid +'.'+ extension;
             //上传文件获得url
             String url = aliOssUtil.upload(Files.readAllBytes(file.toPath()), newFileName);
@@ -361,7 +377,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             {
                 picture.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
                 picture.setReviewerId(loginUser.getId());
-                picture.setReviewMessage("管理员上传，自动通过审核");
+                picture.setReviewMessage("管理员批量上传，自动通过审核");
                 picture.setReviewTime(LocalDateTime.now());
             }
             //如果是批量抓图，则图片名称重置
@@ -436,7 +452,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             //达到指定数量就退出循环
             if(successCount>count){break;}
         }
-        return successCount;
+        return successCount-1;
     }
 
     @Override
@@ -503,7 +519,43 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             }
         }
     }
-
+    /**
+     * 将图片转换为WebP格式
+     * @param file 图片文件
+     */
+    private boolean toWebp(File file) {
+       File webpFile = null;
+        try {
+            BufferedImage image = ImageIO.read(file);
+            ImageWriter writer = ImageIO.getImageWritersByMIMEType("image/webp").next();
+            WebPWriteParam writeParam = new WebPWriteParam(writer.getLocale());
+            writeParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            // 设置有损压缩
+            writeParam.setCompressionType(writeParam.getCompressionTypes()[WebPWriteParam.LOSSY_COMPRESSION]);
+            //设置 80% 的质量. 设置范围 0-1
+            writeParam.setCompressionQuality(0.8f);
+            // Save the image
+            webpFile = File.createTempFile(UUID.randomUUID().toString(), ".webp");
+            FileImageOutputStream output = new FileImageOutputStream(webpFile);
+            writer.setOutput(output);
+            writer.write(null, new IIOImage(image, null, null), writeParam);
+            // 转换成功，则将原始文件替换为WebP文件(转换失败的话会直接报错，不会执行下面的语句)
+           FileCopyUtils.copy(webpFile, file);
+           output.close();
+            return true;
+        } catch (IOException e) {
+           log.info("转换图片格式失败，使用原始格式上传：{}", e.getMessage());
+           return false;
+        }finally {
+            // 删除临时文件
+            if (webpFile != null && webpFile.exists()) {
+                boolean delete = webpFile.delete();
+                if (!delete) {
+                    log.error("临时文件删除失败，路径：{}", webpFile.getAbsolutePath());
+                }
+            }
+        }
+    }
 
 }
 
