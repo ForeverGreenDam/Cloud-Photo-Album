@@ -17,6 +17,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.greendam.cloudphotoalbum.common.AliOssUtil;
 import com.greendam.cloudphotoalbum.constant.CacheConstant;
+import com.greendam.cloudphotoalbum.constant.OssConstant;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
@@ -138,6 +139,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             picture.setPicWidth(image.getWidth());
             picture.setPicHeight(image.getHeight());
             picture.setPicScale((double)image.getWidth()/ (double) image.getHeight());
+            picture.setThumbnailUrl(url+ OssConstant.THUMBNAIL);
             //如果是管理员上传，直接通过审核
             if(UserConstant.ADMIN_ROLE.equals(userService.getUser(request).getUserRole()))
             {
@@ -372,6 +374,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             picture.setPicWidth(image.getWidth());
             picture.setPicHeight(image.getHeight());
             picture.setPicScale((double)image.getWidth()/ (double) image.getHeight());
+            picture.setThumbnailUrl(url+ OssConstant.THUMBNAIL);
             //如果是管理员上传，直接通过审核
             if(UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole()))
             {

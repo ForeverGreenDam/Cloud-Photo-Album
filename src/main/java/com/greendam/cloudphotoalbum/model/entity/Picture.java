@@ -117,4 +117,9 @@ public class Picture implements Serializable {
      * 审核时间
      */
     private LocalDateTime reviewTime;
+    /**
+     * 缩略图 url
+     */
+    private String thumbnailUrl;
+
 }
