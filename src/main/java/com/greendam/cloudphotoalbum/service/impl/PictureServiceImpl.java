@@ -42,6 +42,8 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.FileCopyUtils;
@@ -558,6 +560,19 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                 }
             }
         }
+    }
+    /**
+     *定时任务：每月十五号夜间删除逻辑删除的图片
+     */
+    @Async
+    @Scheduled(cron = "59 59 23 15 * ? ")
+    public void cleanDataBase(){
+        //首先查询数据库，找出所有逻辑删除的图片
+        List<String> urls = pictureMapper.selectDeleteUrls();
+        //然后调用阿里云OSS删除图片
+        aliOssUtil.delete(urls);
+        //将逻辑删除的图片删除状态转为物理删除
+        pictureMapper.updateDeleteStatus();
     }
 
 }

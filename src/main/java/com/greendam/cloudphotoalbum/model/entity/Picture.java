@@ -96,6 +96,7 @@ public class Picture implements Serializable {
 
     /**
      * 是否删除
+     * 0-未删除; 1-逻辑删除 2-物理删除
      */
     private Integer isDelete;
     /**
