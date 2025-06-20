@@ -2,7 +2,13 @@ server:
   port: 8123
   servlet:
     context-path: /api
+    session:
+      cookie:
+        max-age: 2592000 # 30 days in seconds
 spring:
+  session:
+    store-type: redis
+    timeout: 2592000 # 30 days in seconds
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
