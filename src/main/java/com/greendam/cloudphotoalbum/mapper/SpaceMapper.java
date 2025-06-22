@@ -1,7 +1,7 @@
 package com.greendam.cloudphotoalbum.mapper;
 
-import com.greendam.cloudphotoalbum.model.entity.Space;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.greendam.cloudphotoalbum.model.entity.Space;
 
 /**
 * @author ForeverGreenDam

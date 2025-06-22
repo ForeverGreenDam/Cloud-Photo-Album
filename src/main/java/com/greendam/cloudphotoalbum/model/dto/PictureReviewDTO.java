@@ -1,6 +1,7 @@
 package com.greendam.cloudphotoalbum.model.dto;
 
 import lombok.Data;
+
 import java.io.Serializable;
 
 /**

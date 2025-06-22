@@ -4,11 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.greendam.cloudphotoalbum.model.dto.*;
-import com.greendam.cloudphotoalbum.model.entity.Picture ;
-import com.greendam.cloudphotoalbum.model.entity.User;
+import com.greendam.cloudphotoalbum.model.entity.Picture;
 import com.greendam.cloudphotoalbum.model.vo.PictureVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
-import com.greendam.cloudphotoalbum.model.vo.UserVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;

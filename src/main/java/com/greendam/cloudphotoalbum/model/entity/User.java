@@ -1,13 +1,11 @@
 package com.greendam.cloudphotoalbum.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Builder;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
-
-import lombok.Builder;
-import lombok.Data;
 
 /**
  * 用户

@@ -1,8 +1,7 @@
 package com.greendam.cloudphotoalbum.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.greendam.cloudphotoalbum.model.entity.Picture ;
-import org.apache.ibatis.annotations.Delete;
+import com.greendam.cloudphotoalbum.model.entity.Picture;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 

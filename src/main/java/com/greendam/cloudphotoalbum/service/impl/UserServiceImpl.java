@@ -9,6 +9,7 @@ import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.exception.ThrowUtils;
+import com.greendam.cloudphotoalbum.mapper.UserMapper;
 import com.greendam.cloudphotoalbum.model.dto.UserLoginDTO;
 import com.greendam.cloudphotoalbum.model.dto.UserQueryDTO;
 import com.greendam.cloudphotoalbum.model.dto.UserRegisterDTO;
@@ -16,7 +17,6 @@ import com.greendam.cloudphotoalbum.model.entity.User;
 import com.greendam.cloudphotoalbum.model.enums.UserRoleEnum;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.service.UserService;
-import com.greendam.cloudphotoalbum.mapper.UserMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 

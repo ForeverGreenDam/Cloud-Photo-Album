@@ -5,10 +5,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.exception.ThrowUtils;
+import com.greendam.cloudphotoalbum.mapper.SpaceMapper;
 import com.greendam.cloudphotoalbum.model.entity.Space;
 import com.greendam.cloudphotoalbum.model.enums.SpaceLevelEnum;
 import com.greendam.cloudphotoalbum.service.SpaceService;
-import com.greendam.cloudphotoalbum.mapper.SpaceMapper;
 import org.springframework.stereotype.Service;
 
 /**
