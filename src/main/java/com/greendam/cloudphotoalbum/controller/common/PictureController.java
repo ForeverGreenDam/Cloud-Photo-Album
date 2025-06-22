@@ -55,7 +55,7 @@ public class PictureController {
     @PostMapping("/upload")
     @AuthCheck
     public BaseResponse<PictureVO> uploadPicture(@RequestParam("file")MultipartFile file,
-                                                 PictureUploadDTO pictureUploadDTO,
+                                                  PictureUploadDTO pictureUploadDTO,
                                                  HttpServletRequest request) {
         ThrowUtils.throwIf(file.isEmpty(), ErrorCode.PARAMS_ERROR);
       PictureVO VO=  pictureService.uploadPicture(file,pictureUploadDTO,request);

@@ -16,6 +16,7 @@ import com.greendam.cloudphotoalbum.model.entity.Picture;
 import com.greendam.cloudphotoalbum.model.enums.PictureReviewStatusEnum;
 import com.greendam.cloudphotoalbum.model.enums.SpaceLevelEnum;
 import com.greendam.cloudphotoalbum.model.vo.PictureVO;
+import com.greendam.cloudphotoalbum.model.vo.SpaceVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.service.PictureService;
 import com.greendam.cloudphotoalbum.service.SpaceService;
@@ -54,11 +55,9 @@ public class SpaceController {
                 .collect(Collectors.toList());
         return BaseResponse.success(spaceLevelList);
     }
-
-
-
-
-
+    @PostMapping("add")
+    @AuthCheck
+    public BaseResponse<SpaceVO> addSpace(){return null;}
 }
 
 

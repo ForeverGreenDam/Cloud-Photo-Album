@@ -78,7 +78,7 @@ public class UserController {
      */
     @GetMapping("/get")
     @AuthCheck
-    public BaseResponse<UserVO> getUser(long id) {
+    public BaseResponse<UserVO> getUser(Long id) {
         ThrowUtils.throwIf(id==0, ErrorCode.PARAMS_ERROR);
         User user = userService.getById(id);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR, "用户不存在");
