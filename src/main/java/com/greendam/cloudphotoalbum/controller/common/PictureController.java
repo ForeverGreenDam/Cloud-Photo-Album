@@ -14,6 +14,7 @@ import com.greendam.cloudphotoalbum.exception.ThrowUtils;
 import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
 import com.greendam.cloudphotoalbum.model.enums.PictureReviewStatusEnum;
+import com.greendam.cloudphotoalbum.model.vo.PictureTagCategory;
 import com.greendam.cloudphotoalbum.model.vo.PictureVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.service.PictureService;
@@ -25,8 +26,13 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 /**
  * 图片控制器类，用于处理与图片相关的请求
  * @author ForeverGreenDam
@@ -248,6 +254,15 @@ public class PictureController {
         //清除缓存
         pictureService.flashAllPictureCache();
         return BaseResponse.success(uploadCount);
+    }
+    @GetMapping("/tag_category")
+    public BaseResponse<PictureTagCategory> tagsAndCategory(){
+        PictureTagCategory pictureTagCategory = new PictureTagCategory();
+        String[] categories = {"风景", "人物", "动物", "生活", "美食", "艺术", "科技", "运动", "自然", "游戏","二次元"};
+        String[] tags={"GalGame","射击","放松","恐怖","影视","动漫","校园","life"};
+        pictureTagCategory.setCategoryList(Arrays.stream(categories).collect(Collectors.toList()));
+        pictureTagCategory.setTagList(Arrays.stream(tags).collect(Collectors.toList()));
+        return BaseResponse.success(pictureTagCategory);
     }
 }
 
