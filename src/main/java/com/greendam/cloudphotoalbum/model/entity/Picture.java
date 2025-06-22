@@ -1,8 +1,6 @@
 package com.greendam.cloudphotoalbum.model.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -17,6 +15,7 @@ import java.util.Date;
 @TableName(value ="picture")
 @Data
 public class Picture implements Serializable {
+    @TableField(exist = false)
     private static final long serialVersionUID = 1L;
     /**
      * id
@@ -98,6 +97,7 @@ public class Picture implements Serializable {
      * 是否删除
      * 0-未删除; 1-逻辑删除 2-物理删除
      */
+   @TableLogic
     private Integer isDelete;
     /**
      * 审核状态：0-待审核; 1-通过; 2-拒绝
@@ -122,5 +122,9 @@ public class Picture implements Serializable {
      * 缩略图 url
      */
     private String thumbnailUrl;
+    /**
+     *所属空间ID，如果为 null 则表示为公共图库
+     */
+    private Long spaceId;
 
 }

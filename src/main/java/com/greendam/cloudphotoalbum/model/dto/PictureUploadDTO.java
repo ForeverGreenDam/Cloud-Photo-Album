@@ -23,4 +23,8 @@ public class PictureUploadDTO implements Serializable {
      * 图片名称（用于批量抓图命名）
      */
     private String picName;
+    /**
+     * 空间ID（用于标识图片所属的空间）
+     */
+    private Long spaceId;
 }

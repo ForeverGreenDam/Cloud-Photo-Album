@@ -134,13 +134,20 @@ public class PictureController {
      */
     @GetMapping("/get/vo")
     @AuthCheck
-    public BaseResponse<PictureVO> getPictureVOById(long id){
+    public BaseResponse<PictureVO> getPictureVOById(long id,HttpServletRequest request){
         // 检查请求参数是否有效
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
+        //检查图片权限
         Picture picture = pictureService.getById(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
-        // 检查图片审核状态
-        ThrowUtils.throwIf(PictureReviewStatusEnum.PASS.getValue()!=picture.getReviewStatus(),ErrorCode.FORBIDDEN_ERROR,"图片未审核");
+        UserLoginVO user = userService.getUser(request);
+        // 检查图片审核状态(公共图库)
+        if(picture.getSpaceId() == null){
+            ThrowUtils.throwIf(PictureReviewStatusEnum.PASS.getValue()!=picture.getReviewStatus(),ErrorCode.FORBIDDEN_ERROR,"图片未审核");
+        }else{
+            //如果是私人空间的图片，则检查用户权限
+            pictureService.checkPictureAuth(user, picture);
+        }
         return BaseResponse.success(pictureService.getPictureVO(picture));
     }
 
@@ -164,9 +171,9 @@ public class PictureController {
      * @return 分页查询结果
      */
     @PostMapping("/list/page/vo")
-    public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryDTO pictureQueryDTO) {
+    public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryDTO pictureQueryDTO,HttpServletRequest request) {
         ThrowUtils.throwIf(pictureQueryDTO == null, ErrorCode.PARAMS_ERROR);
-        return BaseResponse.success(pictureService.listPictureVOByPage(pictureQueryDTO));
+        return BaseResponse.success(pictureService.listPictureVOByPage(pictureQueryDTO,request));
     }
     /**
      * 编辑图片信息（用户）
@@ -201,6 +208,8 @@ public class PictureController {
         } else {
             picture.setReviewStatus(PictureReviewStatusEnum.REVIEWING.getValue());
         }
+        //检查权限
+        pictureService.checkPictureAuth(user, picture);
         boolean ok = pictureService.updateById(picture);
         ThrowUtils.throwIf(!ok, ErrorCode.OPERATION_ERROR);
         //清除缓存

@@ -1,10 +1,7 @@
 package com.greendam.cloudphotoalbum.model.dto;
 
-import com.greendam.cloudphotoalbum.model.enums.PictureReviewStatusEnum;
 import lombok.Data;
-
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
  * @author ForeverGreenDam

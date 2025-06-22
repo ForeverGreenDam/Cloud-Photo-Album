@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.entity.Picture ;
+import com.greendam.cloudphotoalbum.model.entity.User;
 import com.greendam.cloudphotoalbum.model.vo.PictureVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
+import com.greendam.cloudphotoalbum.model.vo.UserVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -58,7 +60,7 @@ public interface PictureService extends IService<Picture> {
      * @param pictureQueryDTO  图片查询数据传输对象
      * @return 分页的图片视图对象列表
      */
-    Page<PictureVO> listPictureVOByPage(PictureQueryDTO pictureQueryDTO);
+    Page<PictureVO> listPictureVOByPage(PictureQueryDTO pictureQueryDTO,HttpServletRequest request);
 
     /**
      * 图片审核
@@ -88,4 +90,10 @@ public interface PictureService extends IService<Picture> {
      * 清除图片缓存
      */
     void flashAllPictureCache( ) ;
+    /**
+     * 检查图片的权限
+     * @param loginUser 登录用户信息
+     * @param picture 图片实体
+     */
+    void checkPictureAuth(UserLoginVO loginUser, Picture picture);
 }
