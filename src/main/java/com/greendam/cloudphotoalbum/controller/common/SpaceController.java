@@ -51,7 +51,7 @@ public class SpaceController {
     /**
      * 新增空间
      * @param spaceAddDTO 空间添加数据传输对象，包含空间名称、描述等信息
-     * @return 空间视图
+     * @return 空间ID
      */
     @PostMapping("/add")
     @AuthCheck
@@ -77,15 +77,15 @@ public class SpaceController {
 
     /**
      * 编辑空间
-     * @return 编辑是否成功
+     * @return 空间ID
      */
     @PostMapping("/edit")
     @AuthCheck
-    public BaseResponse<Boolean> edit(@RequestBody SpaceEditDTO spaceEditDTO,HttpServletRequest request) {
+    public BaseResponse<Long> edit(@RequestBody SpaceEditDTO spaceEditDTO,HttpServletRequest request) {
         ThrowUtils.throwIf(spaceEditDTO==null, ErrorCode.PARAMS_ERROR);
         UserLoginVO user = userService.getUser(request);
         spaceService.edit(spaceEditDTO,user);
-        return BaseResponse.success(true);
+        return BaseResponse.success(spaceEditDTO.getId());
     }
     /**
      * 获取空间详情（管理员）
@@ -150,14 +150,13 @@ public class SpaceController {
     /**
      * 更新空间信息(管理员)
      * @param spaceUpdateDTO 空间更新数据传输对象，包含空间ID和更新信息
-     * @return 更新是否成功
+     * @return 空间ID
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> update(@RequestBody SpaceUpdateDTO spaceUpdateDTO) {
+    public BaseResponse<Long> update(@RequestBody SpaceUpdateDTO spaceUpdateDTO) {
         ThrowUtils.throwIf(spaceUpdateDTO==null, ErrorCode.PARAMS_ERROR);
-        spaceService.updateSpace(spaceUpdateDTO);
-        return BaseResponse.success(true);
+        return BaseResponse.success(spaceService.updateSpace(spaceUpdateDTO));
     }
 }
 

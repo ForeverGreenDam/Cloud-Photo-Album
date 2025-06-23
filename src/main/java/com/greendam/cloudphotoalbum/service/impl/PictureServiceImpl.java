@@ -66,6 +66,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -236,7 +237,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Long reviewerId = pictureQueryRequest.getReviewerId();
         Long spaceId = pictureQueryRequest.getSpaceId();
         boolean nullSpaceId = pictureQueryRequest.isNullSpaceId();
-
+        Date startEditTime = pictureQueryRequest.getStartEditTime();
+        Date endEditTime = pictureQueryRequest.getEndEditTime();
 
         // 从多字段中搜索
         if (StrUtil.isNotBlank(searchText)) {
@@ -261,6 +263,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         queryWrapper.eq(ObjUtil.isNotEmpty(reviewerId), "reviewerId", reviewerId);
         queryWrapper.eq(ObjUtil.isNotEmpty(spaceId), "spaceId", spaceId);
         queryWrapper.isNull(nullSpaceId, "spaceId");
+        queryWrapper.ge(ObjUtil.isNotEmpty(startEditTime), "editTime", startEditTime);
+        queryWrapper.lt(ObjUtil.isNotEmpty(endEditTime), "editTime", endEditTime);
 
         // JSON 数组查询
         if (CollUtil.isNotEmpty(tags)) {
@@ -333,6 +337,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         if(spaceId==null){
             //公共图库,仅查询审核通过的图片
             pictureQueryDTO.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+            pictureQueryDTO.setNullSpaceId(true);
         }else{
             //私人空间，审核不受限
             UserLoginVO user = userService.getUser(request);
@@ -353,7 +358,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         if (redisValue != null) {
             // 如果Redis缓存存在，返回，并更新本地缓存，重置Redis缓存的过期时间
             Page<PictureVO> cachedPage = JSONUtil.toBean(redisValue, Page.class);
-            LOCAL_CACHE.put(localKey, JSONUtil.toJsonStr(pictureQueryDTO));
+            LOCAL_CACHE.put(localKey, JSONUtil.toJsonStr(cachedPage));
             stringRedisTemplate.opsForValue().set(redisKey, JSONUtil.toJsonStr(cachedPage),
                     CacheConstant.PICTURE_EXPIRE + RandomUtil.randomInt(0,300), TimeUnit.SECONDS);
             return cachedPage;

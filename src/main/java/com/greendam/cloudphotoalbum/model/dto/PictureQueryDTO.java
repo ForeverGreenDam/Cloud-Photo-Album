@@ -98,6 +98,16 @@ public class PictureQueryDTO extends PageRequest implements Serializable {
      * 空间 id
      */
     private Long spaceId;
+    /**
+     * 开始编辑时间
+     */
+    private Date startEditTime;
+
+    /**
+     * 结束编辑时间
+     */
+    private Date endEditTime;
+
 
     /**
      * 是否只查询 spaceId 为 null 的数据

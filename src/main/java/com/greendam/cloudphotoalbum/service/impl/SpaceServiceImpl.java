@@ -112,7 +112,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
     }
 
     @Override
-    public void updateSpace(SpaceUpdateDTO spaceUpdateDTO) {
+    public Long updateSpace(SpaceUpdateDTO spaceUpdateDTO) {
         Space space = new Space();
         BeanUtil.copyProperties(spaceUpdateDTO, space);
         // 校验参数
@@ -128,6 +128,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         fillSpaceBySpaceLevel(space);
         // 更新空间信息
         spaceMapper.updateById(space);
+        return spaceId;
     }
 
     @Override

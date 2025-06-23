@@ -50,7 +50,7 @@ public interface SpaceService extends IService<Space> {
      * 更新空间信息（管理员）
      * @param spaceUpdateDTO 空间更新数据传输对象，包含空间ID和新的空间名称等信息
      */
-    void updateSpace(SpaceUpdateDTO spaceUpdateDTO);
+    Long updateSpace(SpaceUpdateDTO spaceUpdateDTO);
     /**
      * 获取空间分页列表(管理员)
      *
