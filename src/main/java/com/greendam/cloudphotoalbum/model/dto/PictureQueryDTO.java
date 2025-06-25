@@ -107,6 +107,10 @@ public class PictureQueryDTO extends PageRequest implements Serializable {
      * 结束编辑时间
      */
     private Date endEditTime;
+    /**
+     * 图片主色调
+     */
+    private String picColor;
 
 
     /**

@@ -26,9 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -255,6 +253,10 @@ public class PictureController {
         pictureService.flashAllPictureCache();
         return BaseResponse.success(uploadCount);
     }
+  /**
+     * 获取图片标签和分类信息
+     * @return 包含标签和分类的 PictureTagCategory 对象
+     */
     @GetMapping("/tag_category")
     public BaseResponse<PictureTagCategory> tagsAndCategory(){
         PictureTagCategory pictureTagCategory = new PictureTagCategory();
@@ -263,6 +265,14 @@ public class PictureController {
         pictureTagCategory.setCategoryList(Arrays.stream(categories).collect(Collectors.toList()));
         pictureTagCategory.setTagList(Arrays.stream(tags).collect(Collectors.toList()));
         return BaseResponse.success(pictureTagCategory);
+    }
+    @PostMapping("/search/color")
+    @AuthCheck
+    public BaseResponse<List<PictureVO>> searchPictureByColor(@RequestBody SearchPictureByColorDTO searchPictureByColorDTO, HttpServletRequest request) {
+        ThrowUtils.throwIf(searchPictureByColorDTO == null || searchPictureByColorDTO.getPicColor() == null, ErrorCode.PARAMS_ERROR);
+        UserLoginVO user = userService.getUser(request);
+        List<PictureVO> pictureVOList = pictureService.searchPictureByColor(searchPictureByColorDTO, user);
+        return BaseResponse.success(pictureVOList);
     }
 }
 

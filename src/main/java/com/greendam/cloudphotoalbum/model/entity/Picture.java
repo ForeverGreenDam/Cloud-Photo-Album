@@ -125,5 +125,10 @@ public class Picture implements Serializable {
      *所属空间ID，如果为 null 则表示为公共图库
      */
     private Long spaceId;
+    /**
+     * 图片主色调
+     */
+    private String picColor;
+
 
 }

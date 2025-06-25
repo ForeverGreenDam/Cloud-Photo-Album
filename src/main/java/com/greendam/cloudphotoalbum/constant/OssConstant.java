@@ -9,4 +9,8 @@ public interface OssConstant {
      * 图片处理参数，生成缩略图，生成策略：height固定为180px，宽度按比例缩放
      */
     String  THUMBNAIL = "?x-oss-process=image/resize,h_180,limit_0";
+    /**
+     * 图片处理参数，获取主色调
+     */
+    String AVERAGE_HUE = "?x-oss-process=image/average-hue";
 }

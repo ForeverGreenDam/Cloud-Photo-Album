@@ -10,6 +10,7 @@ import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
 * @author ForeverGreenDam
@@ -94,4 +95,12 @@ public interface PictureService extends IService<Picture> {
      * @param picture 图片实体
      */
     void checkPictureAuth(UserLoginVO loginUser, Picture picture);
+
+    /**
+     * 根据颜色搜索图片
+     * @param searchPictureByColorDTO 颜色搜索数据传输对象，包含颜色信息和分页信息
+     * @param user 登录用户信息
+     * @return 图片视图对象列表
+     */
+    List<PictureVO> searchPictureByColor(SearchPictureByColorDTO searchPictureByColorDTO, UserLoginVO user);
 }

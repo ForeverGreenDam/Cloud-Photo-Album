@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.greendam.cloudphotoalbum.common.AliOssUtil;
+import com.greendam.cloudphotoalbum.common.ColorSimilarUtils;
 import com.greendam.cloudphotoalbum.constant.CacheConstant;
 import com.greendam.cloudphotoalbum.constant.OssConstant;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
@@ -58,6 +59,7 @@ import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.FileImageOutputStream;
 import javax.servlet.http.HttpServletRequest;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -65,11 +67,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -161,6 +162,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             picture.setPicFormat(extension);
             picture.setUserId(user.getId());
             picture.setSpaceId(spaceId);
+            picture.setPicColor(getPicColor(url));
             //图片解析
             BufferedImage image = ImageIO.read(pictureFile);
             picture.setPicSize(pictureFile.length());
@@ -456,6 +458,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             picture.setPicFormat(extension);
             picture.setUserId(loginUser.getId());
             picture.setSpaceId(spaceId);
+            picture.setPicColor(getPicColor(url));
             //图片解析
             BufferedImage image = ImageIO.read(file);
             picture.setPicSize(file.length());
@@ -561,6 +564,36 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     }
 
     @Override
+    public List<PictureVO> searchPictureByColor(SearchPictureByColorDTO searchPictureByColorDTO, UserLoginVO user) {
+        String picColor = searchPictureByColorDTO.getPicColor();
+        Long spaceId = searchPictureByColorDTO.getSpaceId();
+        ThrowUtils.throwIf(StrUtil.isBlank(picColor)||spaceId==null, ErrorCode.PARAMS_ERROR);
+        //鉴权
+        Space space = spaceService.getById(spaceId);
+        ThrowUtils.throwIf(space==null, ErrorCode.OPERATION_ERROR, "空间不存在");
+        ThrowUtils.throwIf(!space.getUserId().equals(user.getId()), ErrorCode.NOT_AUTH_ERROR, "无权限访问该空间");
+        //查询出该空间所有的图片
+        List<Picture> pictures = pictureMapper.selectList(new QueryWrapper<Picture>().eq("spaceId", spaceId));
+        //保留相似度大于0.8的前十张图片
+        List<Picture> collect = pictures.stream().sorted(Comparator.comparingDouble(picture -> {
+            String color = picture.getPicColor();
+            // 计算颜色相似度
+            log.info("当前图片名称：{}，图片主色调：{}，搜索主色调：{}，当前相似度：{}",
+                    picture.getName(), color, picColor, ColorSimilarUtils.calculateSimilarity(picColor, color));
+            return -ColorSimilarUtils.calculateSimilarity(picColor, color);
+        })).filter(picture -> {
+            // 过滤出相似度大于0.8的图片
+            String color = picture.getPicColor();
+            return ColorSimilarUtils.calculateSimilarity(picColor, color) > 0.8;
+        }).limit(10).collect(Collectors.toList());
+        //脱敏
+        List<PictureVO> pictureVOList = collect.stream()
+                .map(this::getPictureVO)
+                .collect(Collectors.toList());
+        return pictureVOList;
+    }
+
+    @Override
     public void flashAllPictureCache() {
         // 清除本地缓存
         LOCAL_CACHE.invalidateAll();
@@ -660,6 +693,22 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                 }
             }
         }
+    }
+    /**
+     * 获取图片主色调
+     * @param fileUrl 图片的URL地址
+     * @return 主色调
+     */
+    private String getPicColor(String fileUrl) {
+        String url= fileUrl+ OssConstant.AVERAGE_HUE;
+        HttpResponse execute = HttpUtil.createGet(url).execute();
+        if (execute.getStatus() != HttpStatus.HTTP_OK) {throw new BusinessException(ErrorCode.OPERATION_ERROR, "获取图片主色调失败");}
+        String body= execute.body();
+        if (StrUtil.isBlank(body)) {throw new BusinessException(ErrorCode.OPERATION_ERROR, "获取图片主色调失败");}
+        // 解析JSON
+        Map RGB = JSONUtil.toBean(body, Map.class);
+        // 获取RGB值
+        return RGB.get("RGB").toString();
     }
     /**
      * 检查图片查看权限
