@@ -266,6 +266,13 @@ public class PictureController {
         pictureTagCategory.setTagList(Arrays.stream(tags).collect(Collectors.toList()));
         return BaseResponse.success(pictureTagCategory);
     }
+
+    /**
+     * 按照颜色搜图（私人空间）
+     * @param searchPictureByColorDTO 颜色搜索数据传输对象，包含颜色信息和分页信息
+     * @param request HTTP 请求对象，用于获取用户信息
+     * @return 包含符合颜色条件的图片视图对象列表
+     */
     @PostMapping("/search/color")
     @AuthCheck
     public BaseResponse<List<PictureVO>> searchPictureByColor(@RequestBody SearchPictureByColorDTO searchPictureByColorDTO, HttpServletRequest request) {
@@ -274,6 +281,22 @@ public class PictureController {
         List<PictureVO> pictureVOList = pictureService.searchPictureByColor(searchPictureByColorDTO, user);
         return BaseResponse.success(pictureVOList);
     }
+
+    /**
+     * 批量编辑图片（私人空间）
+     * @param pictureEditByBatchDTO 批量编辑图片数据传输对象，包含编辑信息和图片ID列表
+     * @param request HTTP 请求对象，用于获取用户信息
+     * @return 编辑是否成功
+     */
+    @PostMapping("/edit/batch")
+    @AuthCheck
+    public BaseResponse<Boolean> editPictureByBatch(@RequestBody PictureEditByBatchDTO pictureEditByBatchDTO, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureEditByBatchDTO == null, ErrorCode.PARAMS_ERROR);
+        UserLoginVO loginUser = userService.getUser(request);
+        pictureService.editPictureByBatch(pictureEditByBatchDTO, loginUser);
+        return BaseResponse.success(true);
+    }
+
 }
 
 

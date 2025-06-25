@@ -594,6 +594,41 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     }
 
     @Override
+    public void editPictureByBatch(PictureEditByBatchDTO pictureEditByBatchDTO, UserLoginVO loginUser) {
+        //校验参数
+        List<Long> pictureIdList = pictureEditByBatchDTO.getPictureIdList();
+        String category = pictureEditByBatchDTO.getCategory();
+        Long spaceId = pictureEditByBatchDTO.getSpaceId();
+        List<String> tags = pictureEditByBatchDTO.getTags();
+        ThrowUtils.throwIf(spaceId == null||pictureIdList==null, ErrorCode.PARAMS_ERROR);
+        //校验空间权限
+        Space space = spaceService.getById(spaceId);
+        ThrowUtils.throwIf(space==null,ErrorCode.NOT_FOUND_ERROR,"空间不存在");
+        ThrowUtils.throwIf(!space.getUserId().equals(loginUser.getId()),ErrorCode.NOT_AUTH_ERROR,"无权限对该空间操作");
+        //查询指定图片
+        List<Picture> pictures = this.lambdaQuery()
+                .select(Picture::getId)
+                .eq(Picture::getSpaceId, spaceId)
+                .in(Picture::getId, pictureIdList)
+                .list();
+        if (pictures.isEmpty()) {
+            return;
+        }
+        //更新数据
+        pictures.forEach(picture -> {
+            if(!StrUtil.isBlank(category)){
+                picture.setCategory(category);
+            }
+            if(tags!=null&& !tags.isEmpty()){
+                picture.setTags(JSONUtil.toJsonStr(tags));
+            }
+        });
+        //批量重命名
+        String nameRule = pictureEditByBatchDTO.getNameRule();
+        fillPicturesWithNameRule(pictures,nameRule);
+        pictureMapper.updateById(pictures);
+    }
+    @Override
     public void flashAllPictureCache() {
         // 清除本地缓存
         LOCAL_CACHE.invalidateAll();
@@ -740,6 +775,27 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         aliOssUtil.delete(urls);
         //将逻辑删除的图片删除状态转为物理删除
         pictureMapper.updateDeleteStatus();
+    }
+
+    /**
+     * 使用图片名称规则填充图片名：图片名称规则中可以使用{序号}占位符，表示图片的序号
+     * @param pictures 图片列表
+     * @param nameRule 命名规则
+     */
+    private void fillPicturesWithNameRule(List<Picture> pictures, String nameRule) {
+            if (CollUtil.isEmpty(pictures) || StrUtil.isBlank(nameRule)) {
+                return;
+            }
+            long count = 1;
+            try {
+                for (Picture picture : pictures) {
+                    String pictureName = nameRule.replaceAll("\\{序号}", String.valueOf(count++));
+                    picture.setName(pictureName);
+                }
+            } catch (Exception e) {
+                log.error("名称解析错误", e);
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "名称解析错误");
+            }
     }
 }
 

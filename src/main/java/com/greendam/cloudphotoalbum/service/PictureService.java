@@ -103,4 +103,11 @@ public interface PictureService extends IService<Picture> {
      * @return 图片视图对象列表
      */
     List<PictureVO> searchPictureByColor(SearchPictureByColorDTO searchPictureByColorDTO, UserLoginVO user);
+
+    /**
+     * 批量编辑图片信息
+     * @param pictureEditByBatchDTO 批量编辑图片数据传输对象，包含编辑信息和图片ID列表
+     * @param loginUser 登录用户信息
+     */
+    void editPictureByBatch(PictureEditByBatchDTO pictureEditByBatchDTO, UserLoginVO loginUser);
 }
