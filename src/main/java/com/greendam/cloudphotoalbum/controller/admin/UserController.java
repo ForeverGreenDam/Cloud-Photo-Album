@@ -7,7 +7,7 @@ import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.common.DeleteRequest;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
-import com.greendam.cloudphotoalbum.exception.ThrowUtils;
+import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.model.dto.UserAddDTO;
 import com.greendam.cloudphotoalbum.model.dto.UserQueryDTO;
 import com.greendam.cloudphotoalbum.model.dto.UserUpdateDTO;

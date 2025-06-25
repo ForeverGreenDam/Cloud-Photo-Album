@@ -1,4 +1,4 @@
-package com.greendam.cloudphotoalbum.common;
+package com.greendam.cloudphotoalbum.common.utils;
 
 import java.awt.*;
 

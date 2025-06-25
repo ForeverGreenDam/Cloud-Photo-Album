@@ -9,7 +9,7 @@ import com.greendam.cloudphotoalbum.common.DeleteRequest;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
-import com.greendam.cloudphotoalbum.exception.ThrowUtils;
+import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.mapper.SpaceMapper;
 import com.greendam.cloudphotoalbum.model.dto.SpaceAddDTO;
 import com.greendam.cloudphotoalbum.model.dto.SpaceEditDTO;

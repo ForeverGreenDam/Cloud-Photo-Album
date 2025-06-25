@@ -8,12 +8,14 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.greendam.cloudphotoalbum.annotation.AuthCheck;
 import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.common.DeleteRequest;
+import com.greendam.cloudphotoalbum.common.utils.ImageSearchUtils;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
-import com.greendam.cloudphotoalbum.exception.ThrowUtils;
+import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
 import com.greendam.cloudphotoalbum.model.enums.PictureReviewStatusEnum;
+import com.greendam.cloudphotoalbum.model.vo.ImageSearchVO;
 import com.greendam.cloudphotoalbum.model.vo.PictureTagCategory;
 import com.greendam.cloudphotoalbum.model.vo.PictureVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
@@ -295,6 +297,23 @@ public class PictureController {
         UserLoginVO loginUser = userService.getUser(request);
         pictureService.editPictureByBatch(pictureEditByBatchDTO, loginUser);
         return BaseResponse.success(true);
+    }
+
+    /**
+     * 以图搜图接口（仅限在私人空间使用）
+     * @param searchPictureByPictureRequest 包含要搜索的图片ID
+     * @return 包含搜索结果的图片视图对象列表
+     */
+    @PostMapping("/search/picture")
+    @AuthCheck(mustRole = UserConstant.VIP)
+    public BaseResponse<List<ImageSearchVO>> searchPictureByPicture(@RequestBody SearchPictureByPictureDTO searchPictureByPictureRequest) {
+        ThrowUtils.throwIf(searchPictureByPictureRequest == null, ErrorCode.PARAMS_ERROR);
+        Long pictureId = searchPictureByPictureRequest.getPictureId();
+        ThrowUtils.throwIf(pictureId == null || pictureId <= 0, ErrorCode.PARAMS_ERROR);
+        Picture oldPicture = pictureService.getById(pictureId);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        List<ImageSearchVO> resultList = ImageSearchUtils.searchImage(oldPicture.getUrl());
+        return BaseResponse.success(resultList);
     }
 
 }

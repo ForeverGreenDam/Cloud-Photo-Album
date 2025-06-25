@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
-import com.greendam.cloudphotoalbum.exception.ThrowUtils;
+import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.mapper.UserMapper;
 import com.greendam.cloudphotoalbum.model.dto.UserLoginDTO;
 import com.greendam.cloudphotoalbum.model.dto.UserQueryDTO;

@@ -13,4 +13,8 @@ public interface OssConstant {
      * 图片处理参数，获取主色调
      */
     String AVERAGE_HUE = "?x-oss-process=image/average-hue";
+    /**
+     * 图片处理参数，获取PNG格式的图片
+     */
+    String GET_PNG="?x-oss-process=image/format,png";
 }

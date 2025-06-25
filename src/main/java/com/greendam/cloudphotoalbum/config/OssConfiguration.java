@@ -1,6 +1,6 @@
 package com.greendam.cloudphotoalbum.config;
 
-import com.greendam.cloudphotoalbum.common.AliOssUtil;
+import com.greendam.cloudphotoalbum.common.utils.AliOssUtil;
 import com.greendam.cloudphotoalbum.properties.AliOssProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * 阿里OSS配置类，用于创建AliOssUtil对象
+ * @author ForeverGreenDam
  */
 @Configuration
 @Slf4j

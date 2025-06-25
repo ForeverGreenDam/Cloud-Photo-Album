@@ -3,7 +3,7 @@ package com.greendam.cloudphotoalbum.aop;
 import com.greendam.cloudphotoalbum.annotation.AuthCheck;
 import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
-import com.greendam.cloudphotoalbum.exception.ThrowUtils;
+import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.model.enums.UserRoleEnum;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.service.UserService;
@@ -57,11 +57,10 @@ public class AuthCheckAspect {
         //如果当前用户角色为空，则抛出未登录
         ThrowUtils.throwIf(userRole==null, ErrorCode.NOT_LOGIN_ERROR);
         //如果当前用户角色不符合要求，则抛出权限不足
-        //不符合要求的情况有三种：user访问admin或vip接口，vip访问admin接口，admin访问vip接口
+        //不符合要求的情况有三种：user访问admin或vip接口，vip访问admin接口
         if((UserRoleEnum.USER.equals(userRole)&&UserRoleEnum.ADMIN.equals(mustRole))
                 || (UserRoleEnum.USER.equals(userRole)&&UserRoleEnum.VIP.equals(mustRole))
-                || (UserRoleEnum.VIP.equals(userRole)&&UserRoleEnum.ADMIN.equals(mustRole))
-                || (UserRoleEnum.ADMIN.equals(userRole)&&UserRoleEnum.VIP.equals(mustRole))) {
+                || (UserRoleEnum.VIP.equals(userRole)&&UserRoleEnum.ADMIN.equals(mustRole))) {
             log.info("用户角色不符合要求，当前角色：{}，必须角色：{}", userRole, mustRole);
             throw new BusinessException(ErrorCode.NOT_AUTH_ERROR);
         }

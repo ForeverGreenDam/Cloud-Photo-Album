@@ -4,7 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.greendam.cloudphotoalbum.annotation.AuthCheck;
 import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
-import com.greendam.cloudphotoalbum.exception.ThrowUtils;
+import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.model.dto.UserLoginDTO;
 import com.greendam.cloudphotoalbum.model.dto.UserRegisterDTO;
 import com.greendam.cloudphotoalbum.model.entity.User;

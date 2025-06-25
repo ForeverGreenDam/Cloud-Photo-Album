@@ -1,11 +1,11 @@
 package com.greendam.cloudphotoalbum.controller.common;
 
 import com.greendam.cloudphotoalbum.annotation.AuthCheck;
-import com.greendam.cloudphotoalbum.common.AliOssUtil;
+import com.greendam.cloudphotoalbum.common.utils.AliOssUtil;
 import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
-import com.greendam.cloudphotoalbum.exception.ThrowUtils;
+import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
