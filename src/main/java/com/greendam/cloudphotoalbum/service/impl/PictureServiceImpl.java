@@ -634,6 +634,13 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
         // 检查用户权限
         checkPictureAuth(loginUser, picture);
+        //验证图片是否能够进行扩图
+        Integer picHeight = picture.getPicHeight();
+        Integer picWidth = picture.getPicWidth();
+        ThrowUtils.throwIf(picHeight < 512 || picWidth < 512, ErrorCode.PARAMS_ERROR,
+                "图片尺寸过小，扩图需要至少512x512的图片");
+        ThrowUtils.throwIf(picHeight>4096 || picWidth > 4096, ErrorCode.PARAMS_ERROR,
+                "图片尺寸过大，扩图需要不超过4096x4096的图片");
         //创建请求体
         CreateOutPaintingTaskRequest request = new CreateOutPaintingTaskRequest();
         request.setParameters(dto.getParameters());
