@@ -15,10 +15,7 @@ import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
 import com.greendam.cloudphotoalbum.model.enums.PictureReviewStatusEnum;
-import com.greendam.cloudphotoalbum.model.vo.ImageSearchVO;
-import com.greendam.cloudphotoalbum.model.vo.PictureTagCategory;
-import com.greendam.cloudphotoalbum.model.vo.PictureVO;
-import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
+import com.greendam.cloudphotoalbum.model.vo.*;
 import com.greendam.cloudphotoalbum.service.PictureService;
 import com.greendam.cloudphotoalbum.service.UserService;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -314,6 +311,30 @@ public class PictureController {
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
         List<ImageSearchVO> resultList = ImageSearchUtils.searchImage(oldPicture.getUrl());
         return BaseResponse.success(resultList);
+    }
+
+    /**
+     * 创建AI扩图任务接口
+     * @param dto 包含外绘任务信息的请求体
+     * @param request 用于获取当前登录用户
+     * @return 任务响应
+     */
+    @PostMapping("/out_painting/create_task")
+    @AuthCheck(mustRole = UserConstant.VIP)
+    public BaseResponse<CreateOutPaintingTaskResponse> createOutPaintingTaskResponseBaseResponse(
+            @RequestBody CreatePictureOutPaintingTaskRequest dto,HttpServletRequest request) {
+        ThrowUtils.throwIf(dto == null||dto.getPictureId()==null, ErrorCode.PARAMS_ERROR);
+        UserLoginVO user = userService.getUser(request);
+        CreateOutPaintingTaskResponse response= pictureService.createOutPaintingTask(dto, user);
+        return BaseResponse.success(response);
+    }
+
+    @GetMapping("/out_painting/get_task")
+    @AuthCheck(mustRole = UserConstant.VIP)
+    public BaseResponse<GetOutPaintingTaskResponse> getOutPaintingTaskResponseBaseResponse(String taskId){
+        ThrowUtils.throwIf(taskId == null, ErrorCode.PARAMS_ERROR);
+        GetOutPaintingTaskResponse response = pictureService.getOutPaintingTask(taskId);
+        return BaseResponse.success(response);
     }
 
 }

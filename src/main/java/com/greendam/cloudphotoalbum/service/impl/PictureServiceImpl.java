@@ -17,6 +17,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.greendam.cloudphotoalbum.common.utils.AliOssUtil;
 import com.greendam.cloudphotoalbum.common.utils.ColorSimilarUtils;
+import com.greendam.cloudphotoalbum.common.utils.ImageOutPaintUtil;
 import com.greendam.cloudphotoalbum.constant.CacheConstant;
 import com.greendam.cloudphotoalbum.constant.OssConstant;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
@@ -30,9 +31,7 @@ import com.greendam.cloudphotoalbum.model.entity.Picture;
 import com.greendam.cloudphotoalbum.model.entity.Space;
 import com.greendam.cloudphotoalbum.model.entity.User;
 import com.greendam.cloudphotoalbum.model.enums.PictureReviewStatusEnum;
-import com.greendam.cloudphotoalbum.model.vo.PictureVO;
-import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
-import com.greendam.cloudphotoalbum.model.vo.UserVO;
+import com.greendam.cloudphotoalbum.model.vo.*;
 import com.greendam.cloudphotoalbum.service.PictureService;
 import com.greendam.cloudphotoalbum.service.SpaceService;
 import com.greendam.cloudphotoalbum.service.UserService;
@@ -82,6 +81,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     implements PictureService{
     @Resource
     private AliOssUtil aliOssUtil;
+    @Resource
+    private ImageOutPaintUtil imageOutPaintUtil;
     @Resource
     private UserService userService;
     @Resource
@@ -432,7 +433,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
         //验证图片URL的合法性,同时获取文件后缀
         String extension=validPicture(fileUrl);
-        ThrowUtils.throwIf(extension==null, ErrorCode.PARAMS_ERROR, "不支持HEAD请求的图片地址");
         File file=null;
         try {
         //从URL获取文件
@@ -626,6 +626,35 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         fillPicturesWithNameRule(pictures,nameRule);
         pictureMapper.updateById(pictures);
     }
+
+    @Override
+    public CreateOutPaintingTaskResponse createOutPaintingTask(CreatePictureOutPaintingTaskRequest dto, UserLoginVO loginUser) {
+        // 获取图片信息
+        Picture picture = pictureMapper.selectById(dto.getPictureId());
+        ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+        // 检查用户权限
+        checkPictureAuth(loginUser, picture);
+        //创建请求体
+        CreateOutPaintingTaskRequest request = new CreateOutPaintingTaskRequest();
+        request.setParameters(dto.getParameters());
+        CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();
+        input.setImageUrl(picture.getUrl());
+        request.setInput(input);
+        //发起请求
+        return  imageOutPaintUtil.createOutPaintingTaskResponse(request);
+    }
+
+    @Override
+    public GetOutPaintingTaskResponse getOutPaintingTask(String taskId) {
+        //创建请求体
+        CreateOutPaintingTaskResponse request = new CreateOutPaintingTaskResponse();
+        CreateOutPaintingTaskResponse.Output output = new CreateOutPaintingTaskResponse.Output();
+        output.setTaskId(taskId);
+        request.setOutput(output);
+        //发起请求
+        return imageOutPaintUtil.getOutPaintingTaskResponse(request);
+    }
+
     @Override
     public void flashAllPictureCache() {
         // 清除本地缓存

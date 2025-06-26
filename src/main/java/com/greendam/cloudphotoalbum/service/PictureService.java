@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
+import com.greendam.cloudphotoalbum.model.vo.CreateOutPaintingTaskResponse;
+import com.greendam.cloudphotoalbum.model.vo.GetOutPaintingTaskResponse;
 import com.greendam.cloudphotoalbum.model.vo.PictureVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import org.springframework.web.multipart.MultipartFile;
@@ -110,4 +112,18 @@ public interface PictureService extends IService<Picture> {
      * @param loginUser 登录用户信息
      */
     void editPictureByBatch(PictureEditByBatchDTO pictureEditByBatchDTO, UserLoginVO loginUser);
+    /**
+     * 创建AI扩图任务
+     * @param dto 包含外绘任务信息的请求体
+     * @param  loginUser 登录用户信息
+     * @return 创建外绘任务的响应对象
+     */
+    CreateOutPaintingTaskResponse createOutPaintingTask(CreatePictureOutPaintingTaskRequest dto, UserLoginVO loginUser);
+
+    /**
+     * 获取AI扩图处理任务结果
+     * @param taskId 任务ID
+     * @return 获取外绘任务结果的响应对象
+     */
+    GetOutPaintingTaskResponse getOutPaintingTask(String taskId);
 }

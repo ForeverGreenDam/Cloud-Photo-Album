@@ -60,4 +60,7 @@ greendam:
     bucket-name: ${greendam.alioss.bucket-name}
     access-key-id: ${greendam.alioss.access-key-id}
     access-key-secret: ${greendam.alioss.access-key-secret}
+  model:
+    api-key: ${greendam.model.api-key}
+    model: ${greendam.model.model}
 
