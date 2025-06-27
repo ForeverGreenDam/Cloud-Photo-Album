@@ -1,8 +1,6 @@
 package com.greendam.cloudphotoalbum.config;
 
-import com.greendam.cloudphotoalbum.common.utils.AliOssUtil;
 import com.greendam.cloudphotoalbum.common.utils.ImageOutPaintUtil;
-import com.greendam.cloudphotoalbum.properties.AliOssProperties;
 import com.greendam.cloudphotoalbum.properties.ModelProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

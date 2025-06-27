@@ -1,9 +1,9 @@
 package com.greendam.cloudphotoalbum.aop;
 
 import com.greendam.cloudphotoalbum.annotation.AuthCheck;
+import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
-import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.model.enums.UserRoleEnum;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.service.UserService;

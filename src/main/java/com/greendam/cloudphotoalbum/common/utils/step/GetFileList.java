@@ -10,7 +10,6 @@ import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.model.vo.ImageSearchVO;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 获取文件列表
