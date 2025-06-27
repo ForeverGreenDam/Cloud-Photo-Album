@@ -8,20 +8,22 @@ import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.mapper.SpaceMapper;
 import com.greendam.cloudphotoalbum.model.dto.SpaceAnalyzeDTO;
+import com.greendam.cloudphotoalbum.model.dto.SpaceCategoryAnalyzeDTO;
 import com.greendam.cloudphotoalbum.model.dto.SpaceUsageAnalyzeDTO;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
 import com.greendam.cloudphotoalbum.model.entity.Space;
+import com.greendam.cloudphotoalbum.model.vo.SpaceCategoryAnalyzeVO;
 import com.greendam.cloudphotoalbum.model.vo.SpaceUsageAnalyzeVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.service.PictureService;
 import com.greendam.cloudphotoalbum.service.SpaceAnalyzeService;
 import com.greendam.cloudphotoalbum.service.SpaceService;
 import com.greendam.cloudphotoalbum.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
 * @author ForeverGreenDam
@@ -79,6 +81,34 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
             return spaceUsageAnalyzeVO;
         }
     }
+    @Override
+    public List<SpaceCategoryAnalyzeVO> getSpaceCategoryAnalyze(SpaceCategoryAnalyzeDTO spaceCategoryAnalyzeRequest, UserLoginVO loginUser) {
+        ThrowUtils.throwIf(spaceCategoryAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        // 检查权限
+        checkSpaceAnalyzeAuth(spaceCategoryAnalyzeRequest, loginUser);
+        // 构造查询条件
+        QueryWrapper<Picture> queryWrapper = new QueryWrapper<>();
+        // 根据分析范围补充查询条件
+        fillAnalyzeQueryWrapper(spaceCategoryAnalyzeRequest, queryWrapper);
+
+        // 使用 MyBatis-Plus 分组查询
+        queryWrapper.select("category AS category",
+                        "COUNT(*) AS count",
+                        "SUM(picSize) AS totalSize")
+                .groupBy("category");
+
+        // 查询并转换结果
+        return pictureService.getBaseMapper().selectMaps(queryWrapper)
+                .stream()
+                .map(result -> {
+                    String category = result.get("category") != null ? result.get("category").toString() : "未分类";
+                    Long count = ((Number) result.get("count")).longValue();
+                    Long totalSize = ((Number) result.get("totalSize")).longValue();
+                    return new SpaceCategoryAnalyzeVO(category, count, totalSize);
+                })
+                .collect(Collectors.toList());
+    }
+
     /**
      * 校验空间分析权限
      * @param spaceAnalyzeDTO 空间分析 DTO
