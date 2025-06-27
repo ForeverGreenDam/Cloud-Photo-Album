@@ -4,8 +4,10 @@ import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.model.dto.SpaceCategoryAnalyzeDTO;
+import com.greendam.cloudphotoalbum.model.dto.SpaceTagAnalyzeDTO;
 import com.greendam.cloudphotoalbum.model.dto.SpaceUsageAnalyzeDTO;
 import com.greendam.cloudphotoalbum.model.vo.SpaceCategoryAnalyzeVO;
+import com.greendam.cloudphotoalbum.model.vo.SpaceTagAnalyzeVO;
 import com.greendam.cloudphotoalbum.model.vo.SpaceUsageAnalyzeVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.service.SpaceAnalyzeService;
@@ -46,6 +48,14 @@ public class SpaceAnalyzeController {
         List<SpaceCategoryAnalyzeVO> resultList = spaceAnalyzeService.getSpaceCategoryAnalyze(spaceCategoryAnalyzeRequest, loginUser);
         return BaseResponse.success(resultList);
     }
+    @PostMapping("/tag")
+    public BaseResponse<List<SpaceTagAnalyzeVO>> getSpaceTagAnalyze(@RequestBody SpaceTagAnalyzeDTO spaceTagAnalyzeRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(spaceTagAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        UserLoginVO loginUser = userService.getUser(request);
+        List<SpaceTagAnalyzeVO> resultList = spaceAnalyzeService.getSpaceTagAnalyze(spaceTagAnalyzeRequest, loginUser);
+        return BaseResponse.success(resultList);
+    }
+
 
 
 

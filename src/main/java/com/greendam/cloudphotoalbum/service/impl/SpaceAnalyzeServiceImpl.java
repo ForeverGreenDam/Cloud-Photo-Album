@@ -1,6 +1,8 @@
 package com.greendam.cloudphotoalbum.service.impl;
 
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.ObjUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
@@ -9,10 +11,12 @@ import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.mapper.SpaceMapper;
 import com.greendam.cloudphotoalbum.model.dto.SpaceAnalyzeDTO;
 import com.greendam.cloudphotoalbum.model.dto.SpaceCategoryAnalyzeDTO;
+import com.greendam.cloudphotoalbum.model.dto.SpaceTagAnalyzeDTO;
 import com.greendam.cloudphotoalbum.model.dto.SpaceUsageAnalyzeDTO;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
 import com.greendam.cloudphotoalbum.model.entity.Space;
 import com.greendam.cloudphotoalbum.model.vo.SpaceCategoryAnalyzeVO;
+import com.greendam.cloudphotoalbum.model.vo.SpaceTagAnalyzeVO;
 import com.greendam.cloudphotoalbum.model.vo.SpaceUsageAnalyzeVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.service.PictureService;
@@ -23,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -107,6 +112,32 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
                     return new SpaceCategoryAnalyzeVO(category, count, totalSize);
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SpaceTagAnalyzeVO> getSpaceTagAnalyze(SpaceTagAnalyzeDTO spaceTagAnalyzeRequest, UserLoginVO loginUser) {
+            ThrowUtils.throwIf(spaceTagAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+            // 检查权限
+            checkSpaceAnalyzeAuth(spaceTagAnalyzeRequest, loginUser);
+            // 构造查询条件
+            QueryWrapper<Picture> queryWrapper = new QueryWrapper<>();
+            fillAnalyzeQueryWrapper(spaceTagAnalyzeRequest, queryWrapper);
+            // 查询所有符合条件的标签
+            queryWrapper.select("tags");
+            List<String> tagsJsonList = pictureService.getBaseMapper().selectObjs(queryWrapper)
+                    .stream()
+                    .filter(ObjUtil::isNotNull)
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+            // 合并所有标签并统计使用次数
+            Map<String, Long> tagCountMap = tagsJsonList.stream()
+                    .flatMap(tagsJson -> JSONUtil.toList(tagsJson, String.class).stream())
+                    .collect(Collectors.groupingBy(tag -> tag, Collectors.counting()));
+            // 转换为响应对象，按使用次数降序排序
+            return tagCountMap.entrySet().stream()
+                    .sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue()))
+                    .map(entry -> new SpaceTagAnalyzeVO(entry.getKey(), entry.getValue()))
+                    .collect(Collectors.toList());
     }
 
     /**
