@@ -53,4 +53,12 @@ public interface SpaceAnalyzeService extends IService<Space> {
      * @return 用户上传行为分析视图对象列表
      */
     List<SpaceUserAnalyzeVO> getSpaceUserAnalyze(SpaceUserAnalyzeDTO spaceUserAnalyzeRequest, UserLoginVO loginUser);
+
+    /**
+     * 获取空间存储量排名
+     * @param spaceRankAnalyzeRequest 空间排名分析请求数据传输对象，包含空间ID、时间维度等信息
+     * @param loginUser 当前登录用户信息
+     * @return 空间列表
+     */
+    List<Space> getSpaceRankAnalyze(SpaceRankAnalyzeDTO spaceRankAnalyzeRequest, UserLoginVO loginUser);
 }

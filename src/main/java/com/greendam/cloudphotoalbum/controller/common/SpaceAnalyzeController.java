@@ -1,9 +1,12 @@
 package com.greendam.cloudphotoalbum.controller.common;
 
+import com.greendam.cloudphotoalbum.annotation.AuthCheck;
 import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
+import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.model.dto.*;
+import com.greendam.cloudphotoalbum.model.entity.Space;
 import com.greendam.cloudphotoalbum.model.vo.*;
 import com.greendam.cloudphotoalbum.service.SpaceAnalyzeService;
 import com.greendam.cloudphotoalbum.service.SpaceService;
@@ -64,6 +67,15 @@ public class SpaceAnalyzeController {
         List<SpaceUserAnalyzeVO> resultList = spaceAnalyzeService.getSpaceUserAnalyze(spaceUserAnalyzeRequest, loginUser);
         return BaseResponse.success(resultList);
     }
+    @PostMapping("/rank")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<List<Space>> getSpaceRankAnalyze(@RequestBody SpaceRankAnalyzeDTO spaceRankAnalyzeRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(spaceRankAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        UserLoginVO loginUser = userService.getUser(request);
+        List<Space> resultList = spaceAnalyzeService.getSpaceRankAnalyze(spaceRankAnalyzeRequest, loginUser);
+        return BaseResponse.success(resultList);
+    }
+
 
 
 
