@@ -4,12 +4,10 @@ import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.model.dto.SpaceCategoryAnalyzeDTO;
+import com.greendam.cloudphotoalbum.model.dto.SpaceSizeAnalyzeDTO;
 import com.greendam.cloudphotoalbum.model.dto.SpaceTagAnalyzeDTO;
 import com.greendam.cloudphotoalbum.model.dto.SpaceUsageAnalyzeDTO;
-import com.greendam.cloudphotoalbum.model.vo.SpaceCategoryAnalyzeVO;
-import com.greendam.cloudphotoalbum.model.vo.SpaceTagAnalyzeVO;
-import com.greendam.cloudphotoalbum.model.vo.SpaceUsageAnalyzeVO;
-import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
+import com.greendam.cloudphotoalbum.model.vo.*;
 import com.greendam.cloudphotoalbum.service.SpaceAnalyzeService;
 import com.greendam.cloudphotoalbum.service.SpaceService;
 import com.greendam.cloudphotoalbum.service.UserService;
@@ -53,6 +51,13 @@ public class SpaceAnalyzeController {
         ThrowUtils.throwIf(spaceTagAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
         UserLoginVO loginUser = userService.getUser(request);
         List<SpaceTagAnalyzeVO> resultList = spaceAnalyzeService.getSpaceTagAnalyze(spaceTagAnalyzeRequest, loginUser);
+        return BaseResponse.success(resultList);
+    }
+    @PostMapping("/size")
+    public BaseResponse<List<SpaceSizeAnalyzeVO>> getSpaceSizeAnalyze(@RequestBody SpaceSizeAnalyzeDTO spaceSizeAnalyzeRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(spaceSizeAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        UserLoginVO loginUser = userService.getUser(request);
+        List<SpaceSizeAnalyzeVO> resultList = spaceAnalyzeService.getSpaceSizeAnalyze(spaceSizeAnalyzeRequest, loginUser);
         return BaseResponse.success(resultList);
     }
 
