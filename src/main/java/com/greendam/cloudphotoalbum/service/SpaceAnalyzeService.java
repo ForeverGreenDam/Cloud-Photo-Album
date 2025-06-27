@@ -1,10 +1,7 @@
 package com.greendam.cloudphotoalbum.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.greendam.cloudphotoalbum.model.dto.SpaceCategoryAnalyzeDTO;
-import com.greendam.cloudphotoalbum.model.dto.SpaceSizeAnalyzeDTO;
-import com.greendam.cloudphotoalbum.model.dto.SpaceTagAnalyzeDTO;
-import com.greendam.cloudphotoalbum.model.dto.SpaceUsageAnalyzeDTO;
+import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.entity.Space;
 import com.greendam.cloudphotoalbum.model.vo.*;
 
@@ -48,4 +45,12 @@ public interface SpaceAnalyzeService extends IService<Space> {
      * @return 空间图片大小分析视图对象列表
      */
     List<SpaceSizeAnalyzeVO> getSpaceSizeAnalyze(SpaceSizeAnalyzeDTO spaceSizeAnalyzeRequest, UserLoginVO loginUser);
+
+    /**
+     * 分析用户上传行为
+     * @param spaceUserAnalyzeRequest 用户上传行为分析请求数据传输对象，包含用户ID、时间维度等信息
+     * @param loginUser 当前登录用户信息
+     * @return 用户上传行为分析视图对象列表
+     */
+    List<SpaceUserAnalyzeVO> getSpaceUserAnalyze(SpaceUserAnalyzeDTO spaceUserAnalyzeRequest, UserLoginVO loginUser);
 }

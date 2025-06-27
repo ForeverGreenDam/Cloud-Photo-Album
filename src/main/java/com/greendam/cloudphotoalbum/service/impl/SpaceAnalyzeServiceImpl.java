@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
+import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.mapper.SpaceMapper;
 import com.greendam.cloudphotoalbum.model.dto.*;
@@ -21,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -155,6 +155,43 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
         result.add(new SpaceSizeAnalyzeVO("500KB-1MB",sizes.stream().filter(size->size>500*1024&&size<= 1024 * 1024).count()));
         result.add(new SpaceSizeAnalyzeVO(">1MB",sizes.stream().filter(size->size> 1024 * 1024).count()));
         return result;
+    }
+
+    @Override
+    public List<SpaceUserAnalyzeVO> getSpaceUserAnalyze(SpaceUserAnalyzeDTO spaceUserAnalyzeRequest, UserLoginVO loginUser) {
+        // 检查权限
+        checkSpaceAnalyzeAuth(spaceUserAnalyzeRequest, loginUser);
+        // 构造查询条件
+        QueryWrapper<Picture> queryWrapper = new QueryWrapper<>();
+        Long userId = spaceUserAnalyzeRequest.getUserId();
+        queryWrapper.eq(ObjUtil.isNotNull(userId), "userId", userId);
+        fillAnalyzeQueryWrapper(spaceUserAnalyzeRequest, queryWrapper);
+
+        switch (spaceUserAnalyzeRequest.getTimeDimension()){
+            case "day":
+                queryWrapper.select("DATE_FORMAT(createTime, '%Y-%m-%d') AS period", "COUNT(*) AS count");
+                break;
+                case "week":
+                    queryWrapper.select("YEARWEEK(createTime) AS period","COUNT(*) AS count");
+                    break;
+                    case "month":
+                        queryWrapper.select("DATE_FORMAT(createTime, '%Y-%m') AS period","COUNT(*) AS count");
+                        break;
+            default:
+                throw new BusinessException(ErrorCode.PARAMS_ERROR,"不支持的时间维度");
+        }
+        //分组排序
+        queryWrapper.groupBy("period")
+                .orderByAsc("period");
+        List<Map<String,Object>> results= pictureService.getBaseMapper().selectMaps(queryWrapper);
+        return results.stream()
+                .map(result ->
+                        {
+                            String period = result.get("period").toString();
+                            Long count = ((Number) result.get("count")).longValue();
+                            return new SpaceUserAnalyzeVO(period, count);
+                        })
+                .collect(Collectors.toList());
     }
 
     /**

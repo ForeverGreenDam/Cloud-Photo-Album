@@ -3,10 +3,7 @@ package com.greendam.cloudphotoalbum.controller.common;
 import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
-import com.greendam.cloudphotoalbum.model.dto.SpaceCategoryAnalyzeDTO;
-import com.greendam.cloudphotoalbum.model.dto.SpaceSizeAnalyzeDTO;
-import com.greendam.cloudphotoalbum.model.dto.SpaceTagAnalyzeDTO;
-import com.greendam.cloudphotoalbum.model.dto.SpaceUsageAnalyzeDTO;
+import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.vo.*;
 import com.greendam.cloudphotoalbum.service.SpaceAnalyzeService;
 import com.greendam.cloudphotoalbum.service.SpaceService;
@@ -60,6 +57,14 @@ public class SpaceAnalyzeController {
         List<SpaceSizeAnalyzeVO> resultList = spaceAnalyzeService.getSpaceSizeAnalyze(spaceSizeAnalyzeRequest, loginUser);
         return BaseResponse.success(resultList);
     }
+    @PostMapping("/user")
+    public BaseResponse<List<SpaceUserAnalyzeVO>> getSpaceUserAnalyze(@RequestBody SpaceUserAnalyzeDTO spaceUserAnalyzeRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(spaceUserAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        UserLoginVO loginUser = userService.getUser(request);
+        List<SpaceUserAnalyzeVO> resultList = spaceAnalyzeService.getSpaceUserAnalyze(spaceUserAnalyzeRequest, loginUser);
+        return BaseResponse.success(resultList);
+    }
+
 
 
 
