@@ -89,8 +89,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         Space space = spaceMapper.selectById(spaceId);
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
         // 校验空间是否属于当前用户(或者管理员)
-        ThrowUtils.throwIf(!space.getUserId().equals(userId) && !UserConstant.ADMIN_ROLE.equals(user.getUserRole()),
-                ErrorCode.NOT_FOUND_ERROR, "没有权限删除该空间");
+       checkSpaceAuth(space, user);
         // 删除空间
         int i = spaceMapper.deleteById(spaceId);
         ThrowUtils.throwIf(i == 0, ErrorCode.OPERATION_ERROR, "删除空间失败");
@@ -106,9 +105,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         //校验权限
         Space space = spaceMapper.selectById(spaceId);
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
-        Long userId = user.getId();
-        ThrowUtils.throwIf(!space.getUserId().equals(userId) && !UserConstant.ADMIN_ROLE.equals(user.getUserRole()),
-                ErrorCode.NOT_FOUND_ERROR, "没有权限编辑该空间");
+        checkSpaceAuth(space, user);
         // 更新空间信息
         space.setEditTime(LocalDateTime.now());
         spaceMapper.updateById(space);
@@ -226,6 +223,11 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                 .eq(spaceLevel != null, "spaceLevel", spaceLevel)
                 .orderByDesc("createTime");
         return queryWrapper;
+    }
+    @Override
+    public void checkSpaceAuth(Space space, UserLoginVO user) {
+        ThrowUtils.throwIf(!space.getUserId().equals(user.getId()) && !UserConstant.ADMIN_ROLE.equals(user.getUserRole()),
+                ErrorCode.NOT_FOUND_ERROR);
     }
 }
 

@@ -3,11 +3,9 @@ package com.greendam.cloudphotoalbum.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.greendam.cloudphotoalbum.common.DeleteRequest;
-import com.greendam.cloudphotoalbum.model.dto.SpaceAddDTO;
-import com.greendam.cloudphotoalbum.model.dto.SpaceEditDTO;
-import com.greendam.cloudphotoalbum.model.dto.SpaceQueryDTO;
-import com.greendam.cloudphotoalbum.model.dto.SpaceUpdateDTO;
+import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.entity.Space;
+import com.greendam.cloudphotoalbum.model.vo.SpaceUsageAnalyzeVO;
 import com.greendam.cloudphotoalbum.model.vo.SpaceVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 
@@ -67,4 +65,11 @@ public interface SpaceService extends IService<Space> {
      * @return 分页结果，包含空间视图对象
      */
     Page<SpaceVO> getSpacePageVO(SpaceQueryDTO spaceQueryDTO, UserLoginVO user);
+
+    /**
+     * 校验空间权限
+     * @param space 空间对象
+     * @param user 当前登录用户信息
+     */
+    void checkSpaceAuth(Space space, UserLoginVO user);
 }
