@@ -11,12 +11,15 @@ import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.mapper.SpaceMapper;
+import com.greendam.cloudphotoalbum.mapper.SpaceUserMapper;
 import com.greendam.cloudphotoalbum.model.dto.SpaceAddDTO;
 import com.greendam.cloudphotoalbum.model.dto.SpaceEditDTO;
 import com.greendam.cloudphotoalbum.model.dto.SpaceQueryDTO;
 import com.greendam.cloudphotoalbum.model.dto.SpaceUpdateDTO;
 import com.greendam.cloudphotoalbum.model.entity.Space;
+import com.greendam.cloudphotoalbum.model.entity.SpaceUser;
 import com.greendam.cloudphotoalbum.model.enums.SpaceLevelEnum;
+import com.greendam.cloudphotoalbum.model.enums.SpaceRoleEnum;
 import com.greendam.cloudphotoalbum.model.enums.SpaceTypeEnum;
 import com.greendam.cloudphotoalbum.model.vo.SpaceVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
@@ -50,6 +53,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
      * @value: 锁对象
      */
     private final Map<Long, Object> lockMap=new ConcurrentHashMap<>();
+    @Resource
+    private SpaceUserMapper spaceUserMapper;
 
     @Override
     public Long addSpace(SpaceAddDTO spaceAddDTO, UserLoginVO loginUser) {
@@ -88,6 +93,15 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                 // 执行插入操作
                 int insert = spaceMapper.insert(space);
                 ThrowUtils.throwIf(insert == 0, ErrorCode.OPERATION_ERROR);
+                if(spaceAddDTO.getSpaceType()==SpaceTypeEnum.TEAM.getValue()){
+                    SpaceUser spaceUser = new SpaceUser();
+                    spaceUser.setSpaceId(space.getId());
+                    spaceUser.setUserId(userId);
+                    spaceUser.setSpaceRole(SpaceRoleEnum.ADMIN.getValue());
+                    // 插入空间用户关联
+                    int result = spaceUserMapper.insert(spaceUser);
+                    ThrowUtils.throwIf(result == 0, ErrorCode.OPERATION_ERROR);
+                }
                 return space.getId();
             });
             return spaceId;
