@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.greendam.cloudphotoalbum.annotation.AuthCheck;
 import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.common.DeleteRequest;
+import com.greendam.cloudphotoalbum.common.auth.SpaceUserAuthManager;
 import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
@@ -35,6 +36,8 @@ public class SpaceController {
     private SpaceService spaceService;
     @Resource
     private UserService userService;
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
 
     @GetMapping("/list/level")
     public BaseResponse<List<SpaceLevel>> listSpaceLevel() {
@@ -119,6 +122,9 @@ public class SpaceController {
         //填充userVO数据
         UserVO userVO = BeanUtil.copyProperties(loginUser, UserVO.class);
         spaceVO.setUser(userVO);
+        //填充空间权限
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, userVO);
+        spaceVO.setPermissionList(permissionList);
         return  BaseResponse.success(spaceVO);
     }
     /**

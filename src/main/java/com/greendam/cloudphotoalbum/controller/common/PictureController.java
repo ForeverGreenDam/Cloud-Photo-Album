@@ -8,16 +8,24 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.greendam.cloudphotoalbum.annotation.AuthCheck;
 import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.common.DeleteRequest;
+import com.greendam.cloudphotoalbum.common.auth.SpaceUserAuthManager;
+import com.greendam.cloudphotoalbum.common.auth.StpKit;
+import com.greendam.cloudphotoalbum.common.auth.annotation.SaSpaceCheckPermission;
+import com.greendam.cloudphotoalbum.common.auth.model.SpaceUserAuth;
 import com.greendam.cloudphotoalbum.common.utils.ImageSearchUtils;
 import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
+import com.greendam.cloudphotoalbum.constant.SpaceUserPermissionConstant;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.model.dto.*;
 import com.greendam.cloudphotoalbum.model.entity.Picture;
+import com.greendam.cloudphotoalbum.model.entity.Space;
 import com.greendam.cloudphotoalbum.model.enums.PictureReviewStatusEnum;
 import com.greendam.cloudphotoalbum.model.vo.*;
 import com.greendam.cloudphotoalbum.service.PictureService;
+import com.greendam.cloudphotoalbum.service.SpaceService;
 import com.greendam.cloudphotoalbum.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,22 +50,19 @@ public class PictureController {
     @Resource
     private UserService userService;
     @Resource
-    private StringRedisTemplate stringRedisTemplate;
-    private final Cache<String, String> LOCAL_CACHE =
-            Caffeine.newBuilder().initialCapacity(1024)
-                    .maximumSize(10000L)
-                    // 缓存 5 分钟移除
-                    .expireAfterWrite(5L, TimeUnit.MINUTES)
-                    .build();
+    private SpaceUserAuthManager  spaceUserAuthManager;
+    @Resource
+    private SpaceService spaceService;
+
     /**
      * 图片上传服务接口
-     * @param file
-     * @param pictureUploadDTO
-     * @param request
-     * @return
+     * @param file 上传的图片文件
+     * @param pictureUploadDTO 包含图片上传信息的数据传输对象
+     * @param request HTTP请求对象，用于获取用户信息等
+     * @return 包含上传后图片信息的响应对象
      */
     @PostMapping("/upload")
-    @AuthCheck
+    @SaSpaceCheckPermission(SpaceUserPermissionConstant.PICTURE_UPLOAD)
     public BaseResponse<PictureVO> uploadPicture(@RequestParam("file")MultipartFile file,
                                                   PictureUploadDTO pictureUploadDTO,
                                                  HttpServletRequest request) {
@@ -73,7 +78,7 @@ public class PictureController {
      * @param request HTTP 请求对象，用于获取用户信息
      */
     @PostMapping("/upload/url")
-    @AuthCheck
+    @SaSpaceCheckPermission(SpaceUserPermissionConstant.PICTURE_UPLOAD)
     public BaseResponse<PictureVO> uploadPictureByUrl(
             @RequestBody PictureUploadDTO pictureUploadRequest,
             HttpServletRequest request) {
@@ -91,7 +96,7 @@ public class PictureController {
      * @param request
      */
     @PostMapping("/delete")
-    @AuthCheck
+    @SaSpaceCheckPermission(SpaceUserPermissionConstant.PICTURE_DELETE)
     public BaseResponse deletePicture(@RequestBody DeleteRequest deleteRequest,HttpServletRequest request) {
         // 检查请求参数是否有效
         ThrowUtils.throwIf(deleteRequest == null || deleteRequest.getId() == null, ErrorCode.PARAMS_ERROR);
@@ -137,7 +142,6 @@ public class PictureController {
      * @return 图片视图对象
      */
     @GetMapping("/get/vo")
-    @AuthCheck
     public BaseResponse<PictureVO> getPictureVOById(long id,HttpServletRequest request){
         // 检查请求参数是否有效
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
@@ -145,14 +149,24 @@ public class PictureController {
         Picture picture = pictureService.getById(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
         UserLoginVO user = userService.getUser(request);
+        UserVO userVO = BeanUtil.copyProperties(user,UserVO.class);
+        PictureVO pictureVO = pictureService.getPictureVO(picture);
         // 检查图片审核状态(公共图库)
         if(picture.getSpaceId() == null){
             ThrowUtils.throwIf(PictureReviewStatusEnum.PASS.getValue()!=picture.getReviewStatus(),ErrorCode.FORBIDDEN_ERROR,"图片未审核");
+            //填充权限
+            List<String> permissionList = spaceUserAuthManager.getPermissionList(null, userVO);
+            pictureVO.setPermissionList(permissionList);
         }else{
-            //如果是私人空间的图片，则检查用户权限
-            pictureService.checkPictureAuth(user, picture);
+            //如果是空间的图片，则检查用户权限
+            boolean hasPermission= StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_VIEW);
+            ThrowUtils.throwIf(!hasPermission, ErrorCode.NOT_AUTH_ERROR);
+            //填充权限
+            Space space = spaceService.getById(picture.getSpaceId());
+            List<String> permissionList = spaceUserAuthManager.getPermissionList(space, userVO);
+            pictureVO.setPermissionList(permissionList);
         }
-        return BaseResponse.success(pictureService.getPictureVO(picture));
+        return BaseResponse.success(pictureVO);
     }
 
     /**
@@ -185,7 +199,7 @@ public class PictureController {
      * @param request
      */
     @PostMapping("/edit")
-    @AuthCheck
+    @SaSpaceCheckPermission(SpaceUserPermissionConstant.PICTURE_EDIT)
     public BaseResponse editPicture(@RequestBody PictureUpdateDTO pictureUpdateDTO,HttpServletRequest request) {
         // 检查请求参数是否有效
         ThrowUtils.throwIf(pictureUpdateDTO == null || pictureUpdateDTO.getId() == null, ErrorCode.PARAMS_ERROR);
@@ -273,7 +287,7 @@ public class PictureController {
      * @return 包含符合颜色条件的图片视图对象列表
      */
     @PostMapping("/search/color")
-    @AuthCheck
+    @SaSpaceCheckPermission(SpaceUserPermissionConstant.PICTURE_VIEW)
     public BaseResponse<List<PictureVO>> searchPictureByColor(@RequestBody SearchPictureByColorDTO searchPictureByColorDTO, HttpServletRequest request) {
         ThrowUtils.throwIf(searchPictureByColorDTO == null || searchPictureByColorDTO.getPicColor() == null, ErrorCode.PARAMS_ERROR);
         UserLoginVO user = userService.getUser(request);
@@ -288,7 +302,7 @@ public class PictureController {
      * @return 编辑是否成功
      */
     @PostMapping("/edit/batch")
-    @AuthCheck
+    @SaSpaceCheckPermission(SpaceUserPermissionConstant.PICTURE_EDIT)
     public BaseResponse<Boolean> editPictureByBatch(@RequestBody PictureEditByBatchDTO pictureEditByBatchDTO, HttpServletRequest request) {
         ThrowUtils.throwIf(pictureEditByBatchDTO == null, ErrorCode.PARAMS_ERROR);
         UserLoginVO loginUser = userService.getUser(request);
@@ -303,6 +317,7 @@ public class PictureController {
      */
     @PostMapping("/search/picture")
     @AuthCheck(mustRole = UserConstant.VIP)
+    @SaSpaceCheckPermission(SpaceUserPermissionConstant.PICTURE_VIEW)
     public BaseResponse<List<ImageSearchVO>> searchPictureByPicture(@RequestBody SearchPictureByPictureDTO searchPictureByPictureRequest) {
         ThrowUtils.throwIf(searchPictureByPictureRequest == null, ErrorCode.PARAMS_ERROR);
         Long pictureId = searchPictureByPictureRequest.getPictureId();
@@ -321,6 +336,7 @@ public class PictureController {
      */
     @PostMapping("/out_painting/create_task")
     @AuthCheck(mustRole = UserConstant.VIP)
+    @SaSpaceCheckPermission(SpaceUserPermissionConstant.PICTURE_EDIT)
     public BaseResponse<CreateOutPaintingTaskResponse> createOutPaintingTaskResponseBaseResponse(
             @RequestBody CreatePictureOutPaintingTaskRequest dto,HttpServletRequest request) {
         ThrowUtils.throwIf(dto == null||dto.getPictureId()==null, ErrorCode.PARAMS_ERROR);

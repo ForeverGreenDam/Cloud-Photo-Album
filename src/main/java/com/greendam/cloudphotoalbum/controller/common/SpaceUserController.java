@@ -3,7 +3,9 @@ package com.greendam.cloudphotoalbum.controller.common;
 import cn.hutool.core.util.ObjectUtil;
 import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.common.DeleteRequest;
+import com.greendam.cloudphotoalbum.common.auth.annotation.SaSpaceCheckPermission;
 import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
+import com.greendam.cloudphotoalbum.constant.SpaceUserPermissionConstant;
 import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.model.dto.SpaceUserAddDTO;
@@ -44,6 +46,7 @@ public class SpaceUserController {
      * 添加成员到空间
      */
     @PostMapping("/add")
+    @SaSpaceCheckPermission(SpaceUserPermissionConstant.SPACE_USER_MANAGE)
     public BaseResponse<Long> addSpaceUser(@RequestBody SpaceUserAddDTO spaceUserAddRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(spaceUserAddRequest == null, ErrorCode.PARAMS_ERROR);
         long id = spaceUserService.addSpaceUser(spaceUserAddRequest);
@@ -54,6 +57,7 @@ public class SpaceUserController {
      * 从空间移除成员
      */
     @PostMapping("/delete")
+    @SaSpaceCheckPermission(SpaceUserPermissionConstant.SPACE_USER_MANAGE)
     public BaseResponse<Boolean> deleteSpaceUser(@RequestBody DeleteRequest deleteRequest,
                                                  HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
@@ -73,6 +77,7 @@ public class SpaceUserController {
      * 查询某个成员在某个空间的信息
      */
     @PostMapping("/get")
+    @SaSpaceCheckPermission(SpaceUserPermissionConstant.SPACE_USER_MANAGE)
     public BaseResponse<SpaceUser> getSpaceUser(@RequestBody SpaceUserQueryDTO spaceUserQueryRequest) {
         // 参数校验
         ThrowUtils.throwIf(spaceUserQueryRequest == null, ErrorCode.PARAMS_ERROR);
@@ -89,6 +94,7 @@ public class SpaceUserController {
      * 查询成员信息列表
      */
     @PostMapping("/list")
+    @SaSpaceCheckPermission(SpaceUserPermissionConstant.SPACE_USER_MANAGE)
     public BaseResponse<List<SpaceUserVO>> listSpaceUser(@RequestBody SpaceUserQueryDTO spaceUserQueryRequest,
                                                          HttpServletRequest request) {
         ThrowUtils.throwIf(spaceUserQueryRequest == null, ErrorCode.PARAMS_ERROR);
@@ -102,6 +108,7 @@ public class SpaceUserController {
      * 编辑成员信息（设置权限）
      */
     @PostMapping("/edit")
+    @SaSpaceCheckPermission(SpaceUserPermissionConstant.SPACE_USER_MANAGE)
     public BaseResponse<Boolean> editSpaceUser(@RequestBody SpaceUserEditDTO spaceUserEditRequest,
                                                HttpServletRequest request) {
         if (spaceUserEditRequest == null || spaceUserEditRequest.getId() <= 0) {

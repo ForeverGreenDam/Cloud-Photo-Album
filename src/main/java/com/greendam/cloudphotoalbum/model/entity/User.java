@@ -3,6 +3,7 @@ package com.greendam.cloudphotoalbum.model.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
  */
 @TableName(value ="user")
 @Data
-@Builder
+@NoArgsConstructor
 public class User implements Serializable {
     /**
      * 序列化ID

@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.greendam.cloudphotoalbum.common.auth.StpKit;
 import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.BusinessException;
@@ -48,14 +49,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         //密码加密
         String encryptPassword = getEncryptPassword(userPassword);
         // 创建用户对象
-        User user = User.builder()
-                .userAccount(userAccount)
-                .userPassword(encryptPassword)
-                .userRole(UserRoleEnum.USER.getValue())
-                .userName("新用户")
-                .createTime(LocalDateTime.now())
-                .editTime(LocalDateTime.now())
-                .build();
+        User user =new User();
+                user.setUserPassword(userAccount);
+                user.setUserPassword(encryptPassword);
+               user.setUserRole(UserRoleEnum.USER.getValue());
+                user.setUserName("新用户");
+                user.setEditTime(LocalDateTime.now());
         // 插入用户数据
         boolean saveResult = this.save(user);
         ThrowUtils.throwIf(!saveResult, ErrorCode.SYSTEM_ERROR);
@@ -72,6 +71,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         ThrowUtils.throwIf(user == null, ErrorCode.OPERATION_ERROR, "用户不存在或密码错误");
         //在session中存储用户信息
         request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
+        StpKit.SPACE.login(user.getId());
+        StpKit.SPACE.getSession().set(UserConstant.USER_LOGIN_STATE, user);
         return BeanUtil.copyProperties(user, UserLoginVO.class);
     }
     @Override
@@ -88,6 +89,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR);
         // 清除session中的用户信息
         request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+        // 清除StpKit中的用户登录状态
+        StpKit.SPACE.logout();
     }
     @Override
     public QueryWrapper<User> getQueryWrapper(UserQueryDTO userQueryRequest) {
