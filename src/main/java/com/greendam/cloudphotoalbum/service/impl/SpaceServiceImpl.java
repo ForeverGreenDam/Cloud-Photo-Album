@@ -17,6 +17,7 @@ import com.greendam.cloudphotoalbum.model.dto.SpaceQueryDTO;
 import com.greendam.cloudphotoalbum.model.dto.SpaceUpdateDTO;
 import com.greendam.cloudphotoalbum.model.entity.Space;
 import com.greendam.cloudphotoalbum.model.enums.SpaceLevelEnum;
+import com.greendam.cloudphotoalbum.model.enums.SpaceTypeEnum;
 import com.greendam.cloudphotoalbum.model.vo.SpaceVO;
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
 import com.greendam.cloudphotoalbum.model.vo.UserVO;
@@ -55,6 +56,15 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         // 校验参数
         Space space = new Space();
         BeanUtil.copyProperties(spaceAddDTO, space);
+        if(StrUtil .isBlank(space.getSpaceName())){
+            space.setSpaceName("默认空间");
+        }
+        if(space.getSpaceLevel()==null){
+            space.setSpaceLevel(SpaceLevelEnum.COMMON.getValue());
+        }
+        if(space.getSpaceType()==null){
+            space.setSpaceType(SpaceTypeEnum.PRIVATE.getValue());
+        }
         validSpace(space, true);
         //校验spaceLevel，普通用户只能创建普通版
         ThrowUtils.throwIf(SpaceLevelEnum.COMMON.getValue()!=space.getSpaceLevel()
@@ -69,9 +79,12 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         //锁粒度仅限同一个用户重复创建空间时使用
         synchronized (lock) {
             Long spaceId = transactionTemplate.execute(status -> {
-                //限制每个用户只能创建一个空间
-                List<Space> spaces = spaceMapper.selectByUserId(loginUser.getId());
-                ThrowUtils.throwIf(!spaces.isEmpty(), ErrorCode.OPERATION_ERROR, "每个用户只能创建一个空间");
+                //限制每个用户每类空间只能创建一个
+                boolean exists = this.lambdaQuery().
+                        eq(Space::getUserId, userId)
+                        .eq(Space::getSpaceType, spaceAddDTO.getSpaceType())
+                        .exists();
+                ThrowUtils.throwIf(exists, ErrorCode.OPERATION_ERROR, "每个用户每类空间只能创建一个");
                 // 执行插入操作
                 int insert = spaceMapper.insert(space);
                 ThrowUtils.throwIf(insert == 0, ErrorCode.OPERATION_ERROR);
@@ -179,6 +192,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         String spaceName = space.getSpaceName();
         Integer spaceLevel = space.getSpaceLevel();
         SpaceLevelEnum spaceLevelEnum = SpaceLevelEnum.getEnumByValue(spaceLevel);
+        Integer spaceType = space.getSpaceType();
+        SpaceTypeEnum spaceTypeEnum = SpaceTypeEnum.getEnumByValue(spaceType);
         // 要创建
         if (add) {
             if (StrUtil.isBlank(spaceName)) {
@@ -187,6 +202,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
             if (spaceLevel == null) {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "空间级别不能为空");
             }
+            if (spaceType == null) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "空间类别不能为空");
+            }
         }
         // 修改数据时，如果要改空间级别
         if (spaceLevel != null && spaceLevelEnum == null) {
@@ -194,6 +212,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         }
         if (StrUtil.isNotBlank(spaceName) && spaceName.length() > 30) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "空间名称过长");
+        }
+        if (spaceType!=null && spaceTypeEnum == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "空间类别不存在");
         }
     }
     @Override
@@ -216,12 +237,16 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         Long userId = spaceQueryDTO.getUserId();
         String spaceName = spaceQueryDTO.getSpaceName();
         Integer spaceLevel = spaceQueryDTO.getSpaceLevel();
+        Integer spaceType = spaceQueryDTO.getSpaceType();
+        String sortField = spaceQueryDTO.getSortField();
+        String sortOrder = spaceQueryDTO.getSortOrder();
         QueryWrapper<Space> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(id != null, "id", id)
                 .eq(userId != null, "userId", userId)
                 .like(StrUtil.isNotBlank(spaceName), "spaceName", spaceName)
                 .eq(spaceLevel != null, "spaceLevel", spaceLevel)
-                .orderByDesc("createTime");
+                .eq(spaceType != null, "spaceType", spaceType)
+                .orderBy(StrUtil.isNotBlank(sortField), "ascend".equals(sortOrder), sortField);
         return queryWrapper;
     }
     @Override
