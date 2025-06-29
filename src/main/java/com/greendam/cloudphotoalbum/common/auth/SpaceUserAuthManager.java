@@ -10,7 +10,6 @@ import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.model.entity.Space;
 import com.greendam.cloudphotoalbum.model.entity.SpaceUser;
-import com.greendam.cloudphotoalbum.model.entity.User;
 import com.greendam.cloudphotoalbum.model.enums.SpaceRoleEnum;
 import com.greendam.cloudphotoalbum.model.enums.SpaceTypeEnum;
 import com.greendam.cloudphotoalbum.model.vo.UserVO;

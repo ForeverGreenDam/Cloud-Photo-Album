@@ -9,6 +9,31 @@ spring:
   session:
     store-type: redis
     timeout: 2592000 # 30 days in seconds
+#  shardingsphere:
+#    datasource:
+#      names: cloud_photo
+#      cloud_photo:
+#        driver-class-name: ${greendam.datasource.driver-class-name}
+#        url: jdbc:mysql://${greendam.datasource.host}:${greendam.datasource.port}/${greendam.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+#        username: ${greendam.datasource.username}
+#        password: ${greendam.datasource.password}
+#    rules:
+#      sharding:
+#        tables:
+#          picture:
+#            actual-data-nodes: cloud_photo.picture
+#            table-strategy:
+#             standard:
+#              sharding-column: spaceId
+#              sharding-algorithm-name: picture_sharding_algorithm
+#        sharding-algorithms:
+#         picture_sharding_algorithm:
+#            type: CLASS_BASED
+#            props:
+#             strategy: standard
+#             algorithm-class-name: com.greendam.cloudphotoalbum.common.sharding.PictureShardingAlgorithm
+    props:
+      sql-show: true
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
@@ -44,6 +69,7 @@ mybatis-plus:
       logic-delete-field: isDelete
       logic-delete-value: 1
       logic-not-delete-value: 0
+    enable-sql-runner: true
 knife4j:
   enable: true
   openapi:
