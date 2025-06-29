@@ -73,7 +73,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         validSpace(space, true);
         //校验spaceLevel，普通用户只能创建普通版
         ThrowUtils.throwIf(SpaceLevelEnum.COMMON.getValue()!=space.getSpaceLevel()
-                        && UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole()),
+                        && !UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole()),
                 ErrorCode.NOT_FOUND_ERROR, "普通用户只能创建普通版空间，请联系管理员开通专业版或旗舰版空间");
         //填充数据
         fillSpaceBySpaceLevel(space);

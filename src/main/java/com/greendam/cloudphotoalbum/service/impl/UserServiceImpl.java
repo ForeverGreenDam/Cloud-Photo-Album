@@ -50,7 +50,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String encryptPassword = getEncryptPassword(userPassword);
         // 创建用户对象
         User user =new User();
-                user.setUserPassword(userAccount);
+                user.setUserAccount(userAccount);
                 user.setUserPassword(encryptPassword);
                user.setUserRole(UserRoleEnum.USER.getValue());
                 user.setUserName("新用户");

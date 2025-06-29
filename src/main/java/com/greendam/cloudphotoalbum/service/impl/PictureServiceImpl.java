@@ -287,7 +287,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         checkPictureAuth(user,picture);
         Long spaceId = picture.getSpaceId();
         transactionTemplate.execute(status -> {
-            if(spaceId == null){return null;}
+            if(spaceId == null){pictureMapper.deleteById(pictureId);}
             else{
                 Space space = spaceService.getById(spaceId);
                 space.setTotalSize(space.getTotalSize()-picture.getPicSize());
