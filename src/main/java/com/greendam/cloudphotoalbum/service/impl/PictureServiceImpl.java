@@ -322,7 +322,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         //检查用户id有效性
         ThrowUtils.throwIf(pictureVO.getUserId() == null, ErrorCode.PARAMS_ERROR, "用户ID不能为空");
         User user = userMapper.selectById(pictureVO.getUserId());
-        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR, "用户不存在");
+       if (user==null){
+           user = new User();
+           user.setUserName("该用户已注销");
+       }
         UserVO userVO = BeanUtil.copyProperties(user, UserVO.class);
         pictureVO.setUser(userVO);
         return pictureVO;
