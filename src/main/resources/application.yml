@@ -52,7 +52,7 @@ spring:
         login-password: ${greendam.datasource.stat-view-servlet.login-password}
 
   profiles:
-    active: dev
+    active: act
   servlet:
     multipart:
       max-file-size: 10MB
@@ -63,7 +63,7 @@ spring:
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: ''
   global-config:
     db-config:
       logic-delete-field: isDelete
@@ -72,6 +72,10 @@ mybatis-plus:
     enable-sql-runner: true
 knife4j:
   enable: true
+  basic:
+    enable: ${knife4j.basic.enable}
+    username: ${knife4j.basic.username}
+    password: ${knife4j.basic.password}
   openapi:
     title: 云相册接口文档
     group:

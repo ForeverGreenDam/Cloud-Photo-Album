@@ -183,7 +183,6 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <mainClass>com.greendam.cloudphotoalbum.CloudPhotoAlbumApplication</mainClass>
-                    <skip>true</skip>
                 </configuration>
                 <executions>
                     <execution>
