@@ -1,7 +1,6 @@
 package com.greendam.cloudphotoalbum.common.websocket.model;
 
 import com.greendam.cloudphotoalbum.model.vo.UserLoginVO;
-import com.greendam.cloudphotoalbum.model.vo.UserVO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
