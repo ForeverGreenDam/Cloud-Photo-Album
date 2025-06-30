@@ -15,12 +15,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.greendam.cloudphotoalbum.common.auth.StpKit;
 import com.greendam.cloudphotoalbum.common.utils.AliOssUtil;
 import com.greendam.cloudphotoalbum.common.utils.ColorSimilarUtils;
 import com.greendam.cloudphotoalbum.common.utils.ImageOutPaintUtil;
 import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
 import com.greendam.cloudphotoalbum.constant.CacheConstant;
 import com.greendam.cloudphotoalbum.constant.OssConstant;
+import com.greendam.cloudphotoalbum.constant.SpaceUserPermissionConstant;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.BusinessException;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
@@ -114,7 +116,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             ThrowUtils.throwIf(space==null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
             Long spaceUserId = space.getUserId();
             //仅限空间所有者操作
-            ThrowUtils.throwIf(!spaceUserId.equals(user.getId()),ErrorCode.NOT_AUTH_ERROR, "无权限对该空间操作");
+            boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_UPLOAD);
+            ThrowUtils.throwIf(!hasPermission, ErrorCode.NOT_AUTH_ERROR, "没有权限上传图片");
             //检查空间容量
             ThrowUtils.throwIf(space.getMaxSize()<=space.getTotalSize(),ErrorCode.OPERATION_ERROR,"空间容量已满");
             ThrowUtils.throwIf(space.getMaxCount()<=space.getTotalCount(),ErrorCode.OPERATION_ERROR,"空间条目已满");
@@ -127,11 +130,14 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             Picture exit = pictureMapper.selectById(pictureId);
             ThrowUtils.throwIf(exit==null,ErrorCode.PARAMS_ERROR);
             //如果存在，检查用户是否有权限更新该图片
-            ThrowUtils.throwIf(!exit.getUserId().equals(user.getId()) &&
-                    !UserConstant.ADMIN_ROLE.equals(user.getUserRole()),
-                    ErrorCode.NOT_AUTH_ERROR, "无权限更新该图片");
+            boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_EDIT);
+            ThrowUtils.throwIf(!hasPermission, ErrorCode.NOT_AUTH_ERROR, "没有权限更新图片");
             //更新操作时，防止传入空的spaceId导致私有图片传到公共图库
             spaceId=exit.getSpaceId();
+            //更新操作时，先删除原有的图片
+            log.info("在OSS删除原有图片，URL：{}", exit.getUrl());
+            aliOssUtil.delete(Collections.singletonList(exit.getUrl()));
+            log.info("删除成功");
         }
         String originalFilename = file.getOriginalFilename();
         // 获取文件后缀
@@ -283,8 +289,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Picture picture = pictureMapper.selectById(pictureId);
         //如果图片不存在，抛出异常
         ThrowUtils.throwIf(picture == null, ErrorCode.PARAMS_ERROR, "图片不存在");
-        //验证操作权限
-        checkPictureAuth(user,picture);
         Long spaceId = picture.getSpaceId();
         transactionTemplate.execute(status -> {
             if(spaceId == null){pictureMapper.deleteById(pictureId);}
@@ -346,7 +350,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             UserLoginVO user = userService.getUser(request);
             Space space = spaceService.getById(spaceId);
             ThrowUtils.throwIf(space==null,ErrorCode.NOT_FOUND_ERROR, "空间不存在");
-            ThrowUtils.throwIf(!space.getUserId().equals(user.getId()),ErrorCode.NOT_AUTH_ERROR,"无权限访问该空间");
+            boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_VIEW);
+            ThrowUtils.throwIf(!hasPermission, ErrorCode.NOT_AUTH_ERROR, "没有权限查看该空间");
         }
         //先查询本地缓存
         String localKey = CacheConstant.CAFFEINE_PICTURE_KEY+ DigestUtils.md5DigestAsHex(JSONUtil.toJsonStr(pictureQueryDTO).getBytes());
@@ -418,7 +423,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             ThrowUtils.throwIf(space==null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
             Long spaceUserId = space.getUserId();
             //仅限空间所有者操作
-            ThrowUtils.throwIf(!spaceUserId.equals(loginUser.getId()),ErrorCode.NOT_AUTH_ERROR, "无权限对该空间操作");
+            boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_UPLOAD);
+            ThrowUtils.throwIf(!hasPermission, ErrorCode.NOT_AUTH_ERROR, "没有权限上传图片");
             //检查空间容量
             ThrowUtils.throwIf(space.getMaxSize()<=space.getTotalSize(),ErrorCode.OPERATION_ERROR,"空间容量已满");
             ThrowUtils.throwIf(space.getMaxCount()<=space.getTotalCount(),ErrorCode.OPERATION_ERROR,"空间条目已满");
@@ -428,10 +434,13 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             Picture exit = pictureMapper.selectById(pictureId);
             ThrowUtils.throwIf(exit==null,ErrorCode.PARAMS_ERROR);
             //如果存在，检查用户是否有权限更新该图片
-            ThrowUtils.throwIf(!exit.getUserId().equals(loginUser.getId()) &&
-                            !UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole()),
-                    ErrorCode.NOT_AUTH_ERROR, "无权限更新该图片");
+            boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_EDIT);
+            ThrowUtils.throwIf(!hasPermission, ErrorCode.NOT_AUTH_ERROR, "没有权限更新图片");
             spaceId=exit.getSpaceId();
+            //更新操作时，先删除原有的图片
+            log.info("在OSS删除原有图片，URL：{}", exit.getUrl());
+            aliOssUtil.delete(Collections.singletonList(exit.getUrl()));
+            log.info("删除成功");
         }
         //验证图片URL的合法性,同时获取文件后缀
         String extension=validPicture(fileUrl);
@@ -634,8 +643,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 获取图片信息
         Picture picture = pictureMapper.selectById(dto.getPictureId());
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
-        // 检查用户权限
-        checkPictureAuth(loginUser, picture);
         //验证图片是否能够进行扩图
         Integer picHeight = picture.getPicHeight();
         Integer picWidth = picture.getPicWidth();

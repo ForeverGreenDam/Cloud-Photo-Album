@@ -220,8 +220,6 @@ public class PictureController {
         } else {
             picture.setReviewStatus(PictureReviewStatusEnum.REVIEWING.getValue());
         }
-        //检查权限
-        pictureService.checkPictureAuth(user, picture);
         boolean ok = pictureService.updateById(picture);
         ThrowUtils.throwIf(!ok, ErrorCode.OPERATION_ERROR);
         //清除缓存
@@ -312,7 +310,6 @@ public class PictureController {
      * @return 包含搜索结果的图片视图对象列表
      */
     @PostMapping("/search/picture")
-    @AuthCheck(mustRole = UserConstant.VIP)
     @SaSpaceCheckPermission(SpaceUserPermissionConstant.PICTURE_VIEW)
     public BaseResponse<List<ImageSearchVO>> searchPictureByPicture(@RequestBody SearchPictureByPictureDTO searchPictureByPictureRequest) {
         ThrowUtils.throwIf(searchPictureByPictureRequest == null, ErrorCode.PARAMS_ERROR);
@@ -331,7 +328,6 @@ public class PictureController {
      * @return 任务响应
      */
     @PostMapping("/out_painting/create_task")
-    @AuthCheck(mustRole = UserConstant.VIP)
     @SaSpaceCheckPermission(SpaceUserPermissionConstant.PICTURE_EDIT)
     public BaseResponse<CreateOutPaintingTaskResponse> createOutPaintingTaskResponseBaseResponse(
             @RequestBody CreatePictureOutPaintingTaskRequest dto,HttpServletRequest request) {
@@ -342,7 +338,6 @@ public class PictureController {
     }
 
     @GetMapping("/out_painting/get_task")
-    @AuthCheck(mustRole = UserConstant.VIP)
     public BaseResponse<GetOutPaintingTaskResponse> getOutPaintingTaskResponseBaseResponse(String taskId){
         ThrowUtils.throwIf(taskId == null, ErrorCode.PARAMS_ERROR);
         GetOutPaintingTaskResponse response = pictureService.getOutPaintingTask(taskId);

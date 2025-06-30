@@ -1,12 +1,15 @@
 package com.greendam.cloudphotoalbum.controller.common;
 
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.greendam.cloudphotoalbum.annotation.AuthCheck;
 import com.greendam.cloudphotoalbum.common.BaseResponse;
 import com.greendam.cloudphotoalbum.common.DeleteRequest;
 import com.greendam.cloudphotoalbum.common.auth.SpaceUserAuthManager;
+import com.greendam.cloudphotoalbum.common.auth.StpKit;
 import com.greendam.cloudphotoalbum.common.utils.ThrowUtils;
+import com.greendam.cloudphotoalbum.constant.SpaceUserPermissionConstant;
 import com.greendam.cloudphotoalbum.constant.UserConstant;
 import com.greendam.cloudphotoalbum.exception.ErrorCode;
 import com.greendam.cloudphotoalbum.model.dto.*;
@@ -116,8 +119,8 @@ public class SpaceController {
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
         //鉴权
         UserLoginVO loginUser = userService.getUser(request);
-        ThrowUtils.throwIf(!space.getUserId().equals(loginUser.getId())&& !UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole()),
-                ErrorCode.NOT_FOUND_ERROR, "没有权限查看该空间");
+        boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_VIEW);
+        ThrowUtils.throwIf(!hasPermission, ErrorCode.NOT_AUTH_ERROR, "没有权限查看该空间");
         SpaceVO spaceVO = SpaceVO.objToVo(space);
         //填充userVO数据
         UserVO userVO = BeanUtil.copyProperties(loginUser, UserVO.class);
