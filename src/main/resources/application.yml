@@ -32,8 +32,8 @@ spring:
 #            props:
 #             strategy: standard
 #             algorithm-class-name: com.greendam.cloudphotoalbum.common.sharding.PictureShardingAlgorithm
-    props:
-      sql-show: true
+#    props:
+#      sql-show: true
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
